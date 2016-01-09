@@ -95,6 +95,8 @@ DIRECTION.turn = function(direction, delta){
 	return DIRECTION.order[(DIRECTION.order.length+index+delta)%DIRECTION.order.length]
 };
 
+var lakeTiles = [9,100,110,120,130,140,150,160,170,180,190,200,210,10,11,12,13,14,15,16,17,18,19,20,21]
+
 function MapDrawer(ctx, map, stepManager){
 
 	this.xShift = 0;
@@ -120,9 +122,10 @@ function MapDrawer(ctx, map, stepManager){
 	this.draw = function(){
 		ctx.clearRect(0,0,WIDTH,HEIGHT)		
 		ctx.fillStyle="grey"
-		for(var ys=-10; ys<11; ys++){
-			for(var xs=-10; xs<11; xs++){
+		for(var ys=-16; ys<11; ys++){
+			for(var xs=-16; xs<11; xs++){
 				var field = map.get(guy.x+xs,guy.y+ys)					
+				if(field.type == 70) continue;
 				var x = 10+xs
 				var y = 10+ys				
 				var X,Y;
@@ -239,7 +242,19 @@ function MapDrawer(ctx, map, stepManager){
 					X=types.see_we_x.x*8;
 					Y=(1+types.see_we_x.y)*8;
 				}
-				ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)																		
+				
+				if(arrayContains(field.type,lakeTiles)){					
+					ctx.drawImage(sprites,types.see.x*8,types.see.y*8,8,8,32*x,32*y,32,32)																		
+					if(xs==0 && ys==1){					
+						ctx.drawImage(sprites,types.mirror_man.x*8,types.mirror_man.y*8,8,8,32*x,32*y,32,32)	
+					}			
+				}
+				
+				if(field.type != 9 && field.type != 7) {
+					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)																		
+				}else if(field.type == 7){
+					ctx.drawImage(sprites,types.hutStart.x*8,types.hutStart.y*8,8*6,8*2,32*x,32*y,32*6,32*2)																		
+				}
 				
 				if(field.steps){
 					if(field.steps == "fromLeft"){
@@ -271,7 +286,7 @@ function MapDrawer(ctx, map, stepManager){
 		if(map.get(guy.x,guy.y).type != 7){
 			X=types.guy.x*8;
 			Y=types.guy.y*8;
-			ctx.drawImage(sprites,X,Y,8,8,32*10,32*10,32,32)	
+			ctx.drawImage(sprites,X,Y,8,8,32*10,32*10,32,32)							
 		}
 	}
 }
@@ -418,6 +433,9 @@ function start(){
 	types.ground_4 = p(7,3)
 	types.ruin= p(8,3)
 	types.speak= p(9,3)
+	
+	types.hutStart= p(3,4)
+	types.mirror_man= p(9,4)
 
 	textPainter = new TextPainter();
 	
@@ -524,6 +542,8 @@ function start(){
 			}			
 		}				
 	}
+	
+	// stones
 	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.007); i++){
 		var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT))
 		field.type = 8
@@ -534,9 +554,28 @@ function start(){
 		var x = w(MAP_WIDTH);
 		var y = w(MAP_HEIGHT);
 		var field = map.get(x,y)
-		if(!w(3)){
-			field.unit = field.unitType = 'house'
+
+		var skip = false;
+		// do not spawn a house in a house
+		for(var ys=0; ys<2; ys++){
+			for(var xs=0; xs<6; xs++){
+				if(arrayContains(map.get(x+xs,y+ys).type,[7,70])){
+					skip = true;
+				}
+			}
+		}
+		if(skip) continue;
+		
+		if(w(3)){
+			for(var ys=0; ys<2; ys++){
+				for(var xs=0; xs<6; xs++){
+					map.get(x+xs,y+ys).unit = map.get(x+xs,y+ys).unitType = 'house'
+					map.get(x+xs,y+ys).type = 70
+				}
+			}
 			field.type = 7
+			
+			
 		}else{
 			field.unit = field.unitType = 'ruin'
 			field.type = 40;
@@ -559,21 +598,25 @@ function start(){
 		}
 	}
 
-	
+	// wood
 	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
 		var x = w(MAP_WIDTH)
 		var y = w(MAP_HEIGHT)
 		
+		if(x<=10 && x+8>=10 || y<=10 && y+10 >= 10) continue				
+		
 		for(var n=0; n<5+w(5); n++){
 			var xLeft = w(5)			
-			for(var X=xLeft; X<4+w(4); X++){
+			for(var X=xLeft; X<4+w(4); X++){				
 				var field = map.get(x+X,y+n);
+				if(arrayContains(field.type,[7,70])) continue;
 				if(field.type != 0) continue;
 				if(w(6)) field.type = [2,3,4,5].rnd();
 			}			
 		}				
 	}
 	
+	// lake
 	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
 		var x = w(MAP_WIDTH)
 		var y = w(MAP_HEIGHT)
@@ -584,11 +627,13 @@ function start(){
 			var xLeft = w(2)			
 			for(var X=xLeft; X<4+w(4); X++){
 				var field = map.get(x+X,y+n);				
+				if(arrayContains(field.type,[7,70])) continue;
 				field.type = 9
 			}			
 		}				
 	}
 	
+	// lake banks
 	var todo = [];	
 	for(var y=0; y<map.height(); y++){
 		for(var x=0; x<map.width(); x++){
@@ -618,6 +663,8 @@ function start(){
 	
 	for(var i=0; i<todo.length; i++){
 		map.get(todo[i][0],todo[i][1]).type = todo[i][2]
+		map.get(todo[i][0],todo[i][1]).unit = null;
+		map.get(todo[i][0],todo[i][1]).unitType = null;
 	}		
 	
 	map.get(10,10).type = 0
