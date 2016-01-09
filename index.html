@@ -1,0 +1,688 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<script language="javascript">
+//pragma strict
+function arrayContains(needle, haystack) { return haystack.indexOf(needle) > -1; }
+function arrayRemove(needle, haystack) {if(arrayContains(needle, haystack)) {return haystack.splice(haystack.indexOf(needle),1); } return null; }
+Array.prototype.rnd = function() {return this[Math.floor(this.length*Math.random())];}
+function p(x,y) {return {x:x,y:y};}
+function img(src) {
+	var im = new Image(); 
+	im.src =src; 
+	return im;	
+}
+function w(x) {return Math.floor(Math.random()*x)}
+
+function MouseListener(){}
+MouseListener.onMouseDown = function(evt){	
+	for(var i=0; i<MouseListener.registeredClients.mouseDown.length; i++){
+		MouseListener.registeredClients.mouseDown[i].notify(MouseListener.MOUSE_DOWN,evt);
+	}
+}
+MouseListener.onMouseMove = function(evt){
+	for(var i=0; i<MouseListener.registeredClients.mouseMove.length; i++){
+		MouseListener.registeredClients.mouseMove[i].notify(MouseListener.MOUSE_MOVE,evt);
+	}
+}
+MouseListener.MOUSE_MOVE = "mouseMove"
+MouseListener.MOUSE_DOWN = "mouseDown"
+MouseListener.registeredClients = {
+	mouseDown : [],
+	mouseMove : [],
+}
+
+function createCanvas(width ,height, mouseListener, id) 
+{ 
+	var canvas = document.createElement('canvas'); 
+	canvas.id = id;
+	canvas.width = width; 
+	canvas.height= height; 
+	if(mouseListener){
+		canvas.onmousedown = mouseListener.onMouseDown
+		canvas.onmousemove = mouseListener.onMouseMove
+	}
+	return canvas;
+}
+
+function MapField(type){
+	this.type = type	
+}
+
+function Map(width,height){
+	var map = [];
+	for(var y=0; y<height; y++){
+		map.push([]);
+		for(var x=0; x<width; x++){
+			map[y].push(new MapField(0));
+		}
+	}
+	
+	this.getRightField = function(direction, x, y){
+		var rightDirection = DIRECTION.turnRight(direction);
+		return this.get(x+rightDirection.x,y+rightDirection.y)
+	}
+	
+	this.getLeftField = function(direction, x, y){
+		var rightDirection = DIRECTION.turnLeft(direction);
+		return this.get(x+rightDirection.x,y+rightDirection.y)	
+	}
+		
+	this.get = function(x,y){
+		return map[(height+(y%height))%height][(width+(x%width))%width];
+	}
+	
+	this.width = function(){
+		return width;
+	}
+	
+	this.height = function(){
+		return height;
+	}
+}
+
+var DIRECTION = new Object();
+DIRECTION.N = p(0,-1);
+DIRECTION.E = p(1,0);
+DIRECTION.W = p(-1,0);
+DIRECTION.S = p(0,1);	
+DIRECTION.order = [DIRECTION.N,DIRECTION.E,DIRECTION.S,DIRECTION.W];
+DIRECTION.turnAround = function(direction) {return DIRECTION.turn(direction,2)}
+DIRECTION.turnLeft = function(direction) {return DIRECTION.turn(direction,-1)}
+DIRECTION.turnRight = function(direction) {return DIRECTION.turn(direction,1)}
+DIRECTION.turn = function(direction, delta){
+	var index = DIRECTION.order.indexOf(direction)	
+	if(index == -1) return null;		
+	return DIRECTION.order[(DIRECTION.order.length+index+delta)%DIRECTION.order.length]
+};
+
+function MapDrawer(ctx, map, stepManager){
+
+	this.xShift = 0;
+	this.yShift = 0;
+	
+	this.currentMousePosition = null
+
+	this.notify = function(topic, evt){
+		var x = Math.floor((evt.pageX-gameCanvas.offsetLeft)/16)
+		var y = Math.floor((evt.pageY-gameCanvas.offsetTop)/16)
+		if(!(x >= 0 && x < map.width() && y >= 0 && y < map.height())){
+			this.currentMousePosition = null;
+			return
+		}
+		
+		if(topic == MouseListener.MOUSE_DOWN){			
+			
+		}else if(topic == MouseListener.MOUSE_MOVE){
+			this.currentMousePosition = p(x,y)
+		}		
+	}
+
+	this.draw = function(){
+		ctx.clearRect(0,0,WIDTH,HEIGHT)		
+		ctx.fillStyle="grey"
+		for(var ys=-10; ys<11; ys++){
+			for(var xs=-10; xs<11; xs++){
+				var field = map.get(guy.x+xs,guy.y+ys)					
+				var x = 10+xs
+				var y = 10+ys				
+				var X,Y;
+				if(field.type == 0){
+					X=types.ground.x*8;
+					Y=types.ground.y*8;
+				}else if(field.type == 2){
+					X=types.tree1.x*8;
+					Y=types.tree1.y*8;
+				}else if(field.type == 3){
+					X=types.tree2.x*8;
+					Y=types.tree2.y*8;
+				}else if(field.type == 4){
+					X=types.tree3.x*8;
+					Y=types.tree3.y*8;
+				}else if(field.type == 5){
+					X=types.tree4.x*8;
+					Y=types.tree4.y*8;
+				}else if(field.type == 6){
+					X=types.grass.x*8;
+					Y=types.grass.y*8;
+				}else if(field.type == 7){
+					X=types.house.x*8;
+					Y=types.house.y*8;
+				}else if(field.type == 8){
+					X=types.hole.x*8;
+					Y=types.hole.y*8;
+				}else if(field.type == 9){
+					X=types.see.x*8;
+					Y=types.see.y*8;
+				}else if(field.type == 10){
+					X=types.see_n_w.x*8;
+					Y=types.see_n_w.y*8;
+				}else if(field.type == 11){
+					X=types.see_n_e.x*8;
+					Y=types.see_n_e.y*8;
+				}else if(field.type == 12){
+					X=types.see_s_w.x*8;
+					Y=types.see_s_w.y*8;
+				}else if(field.type == 13){
+					X=types.see_s_e.x*8;
+					Y=types.see_s_e.y*8;
+				}else if(field.type == 14){
+					X=types.see_w.x*8;
+					Y=types.see_w.y*8;
+				}else if(field.type == 15){
+					X=types.see_e.x*8;
+					Y=types.see_e.y*8;
+				}else if(field.type == 16){
+					X=types.see_e_x.x*8;
+					Y=types.see_e_x.y*8;
+				}else if(field.type == 17){
+					X=types.see_w_x.x*8;
+					Y=types.see_w_x.y*8;
+				}else if(field.type == 18){
+					X=types.see_n_x.x*8;
+					Y=types.see_n_x.y*8;
+				}else if(field.type == 19){
+					X=types.see_s_x.x*8;
+					Y=types.see_s_x.y*8;
+				}else if(field.type == 20){
+					X=types.see_sn_x.x*8;
+					Y=types.see_sn_x.y*8;
+				}else if(field.type == 21){
+					X=types.see_we_x.x*8;
+					Y=types.see_we_x.y*8;
+				}else if(field.type == 30){
+					X=types.ground_2.x*8;
+					Y=types.ground_2.y*8;
+				}else if(field.type == 31){
+					X=types.ground_3.x*8;
+					Y=types.ground_3.y*8;
+				}else if(field.type == 32){
+					X=types.ground_4.x*8;
+					Y=types.ground_4.y*8;
+				}else if(field.type == 40){
+					X=types.ruin.x*8;
+					Y=types.ruin.y*8;
+				}
+				else if(field.type == 100){
+					X=types.see_n_w.x*8;
+					Y=(1+types.see_n_w.y)*8;
+				}else if(field.type == 110){
+					X=types.see_n_e.x*8;
+					Y=(1+types.see_n_e.y)*8;
+				}else if(field.type == 120){
+					X=types.see_s_w.x*8;
+					Y=(1+types.see_s_w.y)*8;
+				}else if(field.type == 130){
+					X=types.see_s_e.x*8;
+					Y=(1+types.see_s_e.y)*8;
+				}else if(field.type == 140){
+					X=types.see_w.x*8;
+					Y=(1+types.see_w.y)*8;
+				}else if(field.type == 150){
+					X=types.see_e.x*8;
+					Y=(1+types.see_e.y)*8;;
+				}else if(field.type == 160){
+					X=types.see_e_x.x*8;
+					Y=(1+types.see_e_x.y)*8;
+				}else if(field.type == 170){
+					X=types.see_w_x.x*8;
+					Y=(1+types.see_w_x.y)*8;
+				}else if(field.type == 180){
+					X=types.see_n_x.x*8;
+					Y=(1+types.see_n_x.y)*8;
+				}else if(field.type == 190){
+					X=types.see_s_x.x*8;
+					Y=(1+types.see_s_x.y)*8;
+				}else if(field.type == 200){
+					X=types.see_sn_x.x*8;
+					Y=(1+types.see_sn_x.y)*8;
+				}else if(field.type == 210){
+					X=types.see_we_x.x*8;
+					Y=(1+types.see_we_x.y)*8;
+				}
+				ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)																		
+				
+				if(field.steps){
+					if(field.steps == "fromLeft"){
+						ctx.drawImage(sprites,types.stepsRight.x*8,types.stepsRight.y*8,8,8,32*x,32*y,32,32)																		
+					}
+					if(field.steps == "fromRight"){
+						ctx.drawImage(sprites,types.stepsLeft.x*8,types.stepsLeft.y*8,8,8,32*x,32*y,32,32)																		
+					}
+					if(field.steps == "fromDown"){
+						ctx.drawImage(sprites,types.stepsUp.x*8,types.stepsUp.y*8,8,8,32*x,32*y,32,32)																		
+					}
+					if(field.steps == "fromUp"){
+						ctx.drawImage(sprites,types.stepsDown.x*8,types.stepsDown.y*8,8,8,32*x,32*y,32,32)																		
+					}
+					if(field.steps == "steps"){
+						ctx.drawImage(sprites,types.steps.x*8,types.steps.y*8,8,8,32*x,32*y,32,32)																		
+					}
+				}
+				
+				if(field.unitType == 'corpse'){
+					X=types.man.x*8;
+					Y=types.man.y*8;
+					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)	
+				}
+			}
+		}						
+
+		
+		if(map.get(guy.x,guy.y).type != 7){
+			X=types.guy.x*8;
+			Y=types.guy.y*8;
+			ctx.drawImage(sprites,X,Y,8,8,32*10,32*10,32,32)	
+		}
+	}
+}
+
+var MAP_WIDTH =1000;
+var MAP_HEIGHT=1000;
+
+var WIDTH = 21*32;
+var HEIGHT= 21*32;
+
+var gameCanvas, gameView, ctx, map, mapDrawer, stepManager, overlayCanvas, mapCanvas;
+
+var keysDown = [];
+var passableTypes = [30,31,32,9,0,6,10,100,110,120,130,140,150,160,170,180,190,200,210,11,12,13,14,15,16,17,18,19,20,21]
+var types = {}
+var sprites
+var guy = p(10,10)
+
+function box(x,y,w,h){	
+	return {x:x, y:y, width:w, height:h}	
+}
+
+function TextPainter(){
+	var textSprite = img('text.png')
+	var textPattern = {
+		'A' : box(0,0,5,7),
+		'B' : box(4,0,5,7),
+		'C' : box(8,0,5,7),
+		'D' : box(12,0,5,7),
+		'E' : box(16,0,5,7),
+		'F' : box(20,0,5,7),
+		'G' : box(24,0,5,7),
+		'H' : box(28,0,5,7),
+		'I' : box(32,0,3,7),
+		'J' : box(34,0,5,7),
+		'K' : box(38,0,5,7),
+		'L' : box(42,0,5,7),
+		'M' : box(46,0,7,7),
+		'N' : box(52,0,5,7),
+		'O' : box(56,0,5,7),
+		'P' : box(60,0,5,7),
+		'Q' : box(64,0,5,7),
+		'R' : box(68,0,5,7),
+		'S' : box(72,0,5,7),
+		'T' : box(76,0,5,7),
+		'U' : box(80,0,5,7),
+		'V' : box(84,0,5,7),
+		'W' : box(88,0,7,7),
+		'X' : box(94,0,5,7),
+		'Y' : box(98,0,5,7),
+		'Z' : box(102,0,5,7),
+		'_' : box(106,0,7,7),
+		',' : box(112,0,3,7),
+		'&' : box(114,0,6,7),
+		'!' : box(119,0,3,7),
+		'?' : box(121,0,5,7),
+		'.' : box(125,0,3,7),
+		'`' : box(127,0,6,7),
+		'´' : box(132,0,6,7),
+		'-' : box(137,0,5,7),
+		"'" : box(141,0,3,7)
+		
+	}
+	
+	this.reset = function(){
+		globalMessage = null;
+		overlayCtx.clearRect(0,0,WIDTH,HEIGHT)
+	}
+	
+	this.drawText = function(text,ctx,x,y){
+		var characters = text.split('')
+		var xShift=0;
+		for(var i=0; i<characters.length; i++){
+			var character = characters[i];
+			if(textPattern[character]){
+				var letter = textPattern[character]
+				ctx.drawImage(textSprite,letter.x,letter.y,letter.width,letter.height,x+xShift,y,letter.width*4,letter.height*4)
+				xShift+=letter.width*4-4*1
+			}else{
+				xShift+=5*4;
+			}
+		}
+		y+=7*4	
+	}
+}
+
+var texts = {
+	'ruin' : [
+		"THIS PLACE IS COLLAPSED.",
+		"THE REMNANTS OF A HOUSE.\nLOOKS LIKE IT COLLAPSED LONG AGO.",
+		"ONCE, THIS WAS THE HOME OF SOMEBODY.\nNOW THIS PLACE IS A RUIN."
+	],
+	'elder_man' : [
+		"THE FROZEN CORPSE OF AN ELDER MAN.\nWHAT A SHAME!",
+	],
+	'elder_women' : [
+		"THE DEAD BODY OF AN ELDER WOMAN.\nI WONDER WHAT HAPPEND TO HER OUT HERE.",
+	],
+	'women' : [
+		"THE DEAD BODY OF A WOMAN.\nWHY WAS SHE ALONE OUT HERE?",
+	],
+	'man' : [
+		"THIS MAN IS DEAD. HE IS FROZEN.\nI CAN'T SEE ANY WOUNDS.",
+	],
+	'house' : [
+		"SHELTER! FINALLY!\nBUT THE DOOR IS LOCKED."
+	]
+}
+
+var textPainter, overlayCtx;
+function start(){
+	
+	sprites = img('sprites.png')
+	types.guy = p(0,0)
+	types.man = p(0,3)
+	types.tree1 = p(1,0)
+	types.tree2 = p(2,0)
+	types.tree3 = p(3,0)
+	types.tree4 = p(4,0)
+	types.grass = p(5,0)
+	types.house = p(6,0)
+	types.hole = p(7,0)
+	types.stepsRight = p(8,0)	
+	types.ground = p(9,0)
+	types.see = p(10,0)
+	types.stepsDown = p(11,0)
+	types.stepsUp = p(12,0)
+	types.stepsLeft = p(13,0)
+	types.steps = p(14,0)
+	types.ground_2 = p(15,0)
+	types.see_n_w = p(0,1)
+	types.see_n_e = p(1,1)
+	types.see_s_w = p(2,1)
+	types.see_s_e = p(3,1)
+	types.see_w = p(4,1)
+	types.see_e = p(5,1)
+	types.see_e_x = p(6,1)
+	types.see_w_x = p(7,1)
+	types.see_n_x = p(8,1)
+	types.see_s_x = p(9,1)
+	types.see_sn_x = p(10,1)
+	types.see_we_x = p(11,1)
+	types.ground_3 = p(6,3)
+	types.ground_4 = p(7,3)
+	types.ruin= p(8,3)
+	types.speak= p(9,3)
+
+	textPainter = new TextPainter();
+	
+	overlayCanvas = createCanvas(WIDTH,HEIGHT,null,"overlayCanvas")
+	gameCanvas = createCanvas(WIDTH,HEIGHT,MouseListener,"gameCanvas")
+	mapCanvas = createCanvas(WIDTH,HEIGHT,null,"mapCanvas")
+	
+	mapCtx = mapCanvas.getContext('2d')
+	overlayCtx = overlayCanvas.getContext('2d')
+	
+	ctx = gameCanvas.getContext("2d");
+	
+	overlayCtx.mozImageSmoothingEnabled = false;
+	overlayCtx.webkitImageSmoothingEnabled = false;
+	overlayCtx.msImageSmoothingEnabled = false;
+	overlayCtx.imageSmoothingEnabled = false;
+	
+	mapCtx.mozImageSmoothingEnabled = false;
+	mapCtx.webkitImageSmoothingEnabled = false;
+	mapCtx.msImageSmoothingEnabled = false;
+	mapCtx.imageSmoothingEnabled = false;
+	
+	ctx.filllStyle = "black"
+	ctx.fillRect(0,0,WIDTH,HEIGHT)
+	
+	document.body.appendChild(gameCanvas)
+	document.onkeydown = function(evt){
+		var code =  evt.keyCode? evt.keyCode : evt.charCode;
+		if(keysDown[code]) return
+		if(code == 37){
+			if(!map.get(guy.x-1,guy.y).unitType && arrayContains(map.get(guy.x-1,guy.y).type,passableTypes)){
+				if(map.get(guy.x,guy.y).steps || !map.get(guy.x+1,guy.y).steps){
+					map.get(guy.x,guy.y).steps = "steps";
+				}else{
+					map.get(guy.x,guy.y).steps = "fromRight";
+				}
+				guy.x = ((guy.x-1+map.width())%map.width())		
+				textPainter.reset();				
+			}else if(texts[map.get(guy.x-1,guy.y).unit]){
+				globalMessage =  texts[map.get(guy.x-1,guy.y).unit].rnd().split('\n')
+			}
+		}
+		else if(code == 38){
+			if(!map.get(guy.x,guy.y-1).unitType && arrayContains(map.get(guy.x,guy.y-1).type,passableTypes)){
+				if(map.get(guy.x,guy.y).steps || !map.get(guy.x,guy.y+1).steps){
+					map.get(guy.x,guy.y).steps = "steps";
+				}else{
+					map.get(guy.x,guy.y).steps = "fromDown";
+				}
+				guy.y = ((guy.y-1+map.height())%map.height())
+				textPainter.reset();
+			}else if(texts[map.get(guy.x,guy.y-1).unit]){
+				globalMessage =  texts[map.get(guy.x,guy.y-1).unit].rnd().split('\n')
+			}
+		}
+		else if(code == 39){ 
+			if(!map.get(guy.x+1,guy.y).unitType && arrayContains(map.get(guy.x+1,guy.y).type,passableTypes)){			
+				if(map.get(guy.x,guy.y).steps || !map.get(guy.x-1,guy.y).steps){
+					map.get(guy.x,guy.y).steps = "steps";
+				}else{
+					map.get(guy.x,guy.y).steps = "fromLeft";
+				}
+				guy.x = ((guy.x+1+map.width())%map.width());
+				textPainter.reset();
+			}else if(texts[map.get(guy.x+1,guy.y).unit]){
+				globalMessage =  texts[map.get(guy.x+1,guy.y).unit].rnd().split('\n')
+			}
+		}
+		else if(code == 40){
+			if(!map.get(guy.x,guy.y+1).unitType && arrayContains(map.get(guy.x,guy.y+1).type,passableTypes)){
+				if(map.get(guy.x,guy.y).steps || !map.get(guy.x,guy.y-1).steps){
+					map.get(guy.x,guy.y).steps = "steps";
+				}else{
+					map.get(guy.x,guy.y).steps = "fromUp";
+				}
+				guy.y = ((guy.y+1+map.height())%map.height());	
+				textPainter.reset();			
+			}else if(texts[map.get(guy.x,guy.y+1).unit]){
+				globalMessage =  texts[map.get(guy.x,guy.y+1).unitType].rnd().split('\n')
+			}
+		} else if(code == 88){
+			textPainter.reset();
+		}
+		keysDown[code] = true;
+	}
+	document.onkeyup = function(evt){
+		var code =  evt.keyCode? evt.keyCode : evt.charCode;
+		keysDown[code] = false;
+	}
+	
+	map = new Map(MAP_WIDTH,MAP_HEIGHT);	
+	
+	// grass
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
+		var x = w(MAP_WIDTH)
+		var y = w(MAP_HEIGHT)
+		
+		for(var n=0; n<5+w(5); n++){
+			var xLeft = w(5)			
+			for(var X=xLeft; X<4+w(4); X++){
+				var field = map.get(x+X,y+n);
+				if(field.type != 0) continue;
+				if(w(6))field.type = 6;
+			}			
+		}				
+	}
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.007); i++){
+		var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT))
+		field.type = 8
+	}
+	
+	// huts
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.001); i++){
+		var x = w(MAP_WIDTH);
+		var y = w(MAP_HEIGHT);
+		var field = map.get(x,y)
+		if(!w(3)){
+			field.unit = field.unitType = 'house'
+			field.type = 7
+		}else{
+			field.unit = field.unitType = 'ruin'
+			field.type = 40;
+		}
+	}
+
+	// corpse
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.0005); i++){
+		var x = w(MAP_WIDTH);
+		var y = w(MAP_HEIGHT);
+		var field = map.get(x,y)
+		if(arrayContains(field.type,passableTypes)){
+			men.push(p(x,y));
+			var r = w(4)
+			if(r==0) map.get(x,y).unit = 'elder_man'
+			else if(r==1) map.get(x,y).unit = 'elder_women'
+			else if(r==2) map.get(x,y).unit = 'man'
+			else if(r==3) map.get(x,y).unit = 'women'
+			map.get(x,y).unitType = 'corpse'
+		}
+	}
+
+	
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
+		var x = w(MAP_WIDTH)
+		var y = w(MAP_HEIGHT)
+		
+		for(var n=0; n<5+w(5); n++){
+			var xLeft = w(5)			
+			for(var X=xLeft; X<4+w(4); X++){
+				var field = map.get(x+X,y+n);
+				if(field.type != 0) continue;
+				if(w(6)) field.type = [2,3,4,5].rnd();
+			}			
+		}				
+	}
+	
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
+		var x = w(MAP_WIDTH)
+		var y = w(MAP_HEIGHT)
+		
+		if(x<=10 && x+8>=10 || y<=10 && y+10 >= 10) continue
+		
+		for(var n=0; n<5+w(5); n++){
+			var xLeft = w(2)			
+			for(var X=xLeft; X<4+w(4); X++){
+				var field = map.get(x+X,y+n);				
+				field.type = 9
+			}			
+		}				
+	}
+	
+	var todo = [];	
+	for(var y=0; y<map.height(); y++){
+		for(var x=0; x<map.width(); x++){
+			var field = map.get(x,y);
+			if(field.type == 9){
+				if(map.get(x-1,y).type != 9 && map.get(x,y-1).type != 9 && map.get(x,y+1).type != 9) todo.push([x,y,14])
+				else if(map.get(x+1,y).type != 9 && map.get(x,y-1).type != 9 && map.get(x,y+1).type != 9) todo.push([x,y,15])
+				else if(map.get(x-1,y).type != 9 && map.get(x,y-1).type != 9) todo.push([x,y,[10,100].rnd()])
+				else if(map.get(x-1,y).type != 9 && map.get(x,y+1).type != 9) todo.push([x,y,[12,120].rnd()])
+				else if(map.get(x+1,y).type != 9 && map.get(x,y-1).type != 9) todo.push([x,y,[11,110].rnd()])
+				else if(map.get(x+1,y).type != 9 && map.get(x,y+1).type != 9) todo.push([x,y,[13,130].rnd()])
+				else if(map.get(x,y+1).type != 9 && map.get(x,y-1).type != 9) todo.push([x,y,[20,200].rnd()])
+				else if(map.get(x+1,y).type != 9 && map.get(x-1,y).type != 9) todo.push([x,y,[21,210].rnd()])
+				else if(map.get(x-1,y).type != 9) todo.push([x,y,[16,160].rnd()])
+				else if(map.get(x+1,y).type != 9) todo.push([x,y,[17,170].rnd()])
+				else if(map.get(x,y-1).type != 9) todo.push([x,y,[18,180].rnd()])
+				else if(map.get(x,y+1).type != 9) todo.push([x,y,[19,190].rnd()])
+			}
+			else if(field.type == 0 && !w(16)){
+				var r = w(3);
+				if(r==0) field.type = 30
+				else if(r==1) field.type = 31
+				else if(r==2) field.type = 32
+			}
+		}
+	}
+	
+	for(var i=0; i<todo.length; i++){
+		map.get(todo[i][0],todo[i][1]).type = todo[i][2]
+	}		
+	
+	map.get(10,10).type = 0
+	
+	mapDrawer = new MapDrawer(mapCanvas.getContext("2d"), map, stepManager)
+	
+	MouseListener.registeredClients.mouseDown.push(mapDrawer)
+	MouseListener.registeredClients.mouseMove.push(mapDrawer)
+		
+	window.requestAnimationFrame(tick)
+}
+
+var fieldSize = p(16,16);
+
+function drawMouse(){
+	var overlayContext = overlayCanvas.getContext("2d");
+	overlayContext.clearRect(0,0,WIDTH,HEIGHT)
+	if(mapDrawer.currentMousePosition){		
+		overlayContext.fillStyle = "rgba(255,255,255,0.5)";
+		var size = 1;		
+		overlayContext.fillRect(fieldSize.x*mapDrawer.currentMousePosition.x,fieldSize.y*mapDrawer.currentMousePosition.y,fieldSize.x*size,fieldSize.y*size)
+	}
+}
+
+var men = [];
+var lastTime = 0;
+var stepTime = 150;
+var globalMessage = null
+function tick(time){
+	if(time-lastTime > stepTime){
+		lastTime = time;		
+		mapDrawer.draw();
+	}	
+		
+	if(globalMessage){		
+		overlayCtx.fillStyle = "#21262b"
+		overlayCtx.fillRect(0,13*32-5-1*4,WIDTH,100)
+		overlayCtx.fillStyle = "#e0f0f0"
+		overlayCtx.fillRect(0,13*32-5,WIDTH,100 - 2*4)
+		overlayCtx.drawImage(sprites,types.speak.x*8,types.speak.y*8,8,8,10*32,12*32-1*5,32,32)
+		for(var message of globalMessage){
+			textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),13*32+10+(7*4)*globalMessage.indexOf(message));
+		}
+	}
+	
+	ctx.drawImage(mapCanvas,0,0)
+	ctx.drawImage(overlayCanvas,0,0)
+
+	window.requestAnimationFrame(tick)
+}
+
+
+</script>
+
+<style>
+canvas {
+    image-rendering: optimizeSpeed;             // Older versions of FF
+    image-rendering: -moz-crisp-edges;          // FF 6.0+
+    image-rendering: -webkit-optimize-contrast; // Safari
+    image-rendering: -o-crisp-edges;            // OS X & Windows Opera (12.02+)
+    image-rendering: pixelated;                 // Awesome future-browsers
+    -ms-interpolation-mode: nearest-neighbor;   // IE
+}
+</style>
+</head>
+<body onload="start()" style="background-color:black">
+<pre style="color:white">use arrowkeys to move</pre>
+</body></html>
