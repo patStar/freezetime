@@ -253,7 +253,19 @@ function MapDrawer(ctx, map, stepManager){
 				if(field.type != 9 && field.type != 7) {
 					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)																		
 				}else if(field.type == 7){
-					ctx.drawImage(sprites,types.hutStart.x*8,types.hutStart.y*8,8*6,8*2,32*x,32*y,32*6,32*2)																		
+					if(field.houseLength == 3){
+						ctx.drawImage(sprites,types.hutStart.x*8,types.hutStart.y*8,8,8*2,32*x,32*y,32,32*2)																		
+						ctx.drawImage(sprites,(types.hutStart.x+3)*8,types.hutStart.y*8,8,8*2,32*(x+1),32*y,32,32*2)																							
+						ctx.drawImage(sprites,(types.hutStart.x+5)*8,types.hutStart.y*8,8,8*2,32*(x+2),32*y,32,32*2)																							
+					} else if(field.houseLength == 4){
+						ctx.drawImage(sprites,types.hutStart.x*8,types.hutStart.y*8,8,8*2,32*x,32*y,32,32*2)																		
+						ctx.drawImage(sprites,(types.hutStart.x+3)*8,types.hutStart.y*8,8*4,8*2,32*(x+1),32*y,32*4,32*2)																							
+					} else if(field.houseLength == 5){
+						ctx.drawImage(sprites,types.hutStart.x*8,types.hutStart.y*8,8,8*2,32*x,32*y,32,32*2)																		
+						ctx.drawImage(sprites,(types.hutStart.x+2)*8,types.hutStart.y*8,8*4,8*2,32*(x+1),32*y,32*4,32*2)																		
+					} else if(field.houseLength == 6){
+						ctx.drawImage(sprites,types.hutStart.x*8,types.hutStart.y*8,8*6,8*2,32*x,32*y,32*6,32*2)																		
+					}
 				}
 				
 				if(field.steps){
@@ -553,12 +565,15 @@ function start(){
 	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.001); i++){
 		var x = w(MAP_WIDTH);
 		var y = w(MAP_HEIGHT);
-		var field = map.get(x,y)
-
+		var field = map.get(x,y)		
+		
 		var skip = false;
-		// do not spawn a house in a house
+		// do not spawn a house in a house				
+		
+		var len = 3+w(4)
+		
 		for(var ys=0; ys<2; ys++){
-			for(var xs=0; xs<6; xs++){
+			for(var xs=0; xs<len; xs++){
 				if(arrayContains(map.get(x+xs,y+ys).type,[7,70])){
 					skip = true;
 				}
@@ -567,13 +582,15 @@ function start(){
 		if(skip) continue;
 		
 		if(w(3)){
-			for(var ys=0; ys<2; ys++){
-				for(var xs=0; xs<6; xs++){
+			for(var ys=0; ys<2; ys++){				
+				for(var xs=0; xs<len; xs++){
 					map.get(x+xs,y+ys).unit = map.get(x+xs,y+ys).unitType = 'house'
 					map.get(x+xs,y+ys).type = 70
+					map.get(x+xs,y+ys).houseId = i;
 				}
 			}
 			field.type = 7
+			field.houseLength = len;
 			
 			
 		}else{
@@ -625,12 +642,13 @@ function start(){
 		
 		for(var n=0; n<5+w(5); n++){
 			var xLeft = w(2)			
-			for(var X=xLeft; X<4+w(4); X++){
+			for(var X=xLeft; X<3+w(5); X++){
 				var field = map.get(x+X,y+n);				
 				if(arrayContains(field.type,[7,70])) continue;
 				field.type = 9
 			}			
 		}				
+	
 	}
 	
 	// lake banks
@@ -639,7 +657,8 @@ function start(){
 		for(var x=0; x<map.width(); x++){
 			var field = map.get(x,y);
 			if(field.type == 9){
-				if(map.get(x-1,y).type != 9 && map.get(x,y-1).type != 9 && map.get(x,y+1).type != 9) todo.push([x,y,14])
+				if(map.get(x-1,y).type != 9 && map.get(x,y-1).type != 9 && map.get(x,y+1).type != 9 && map.get(x+1,y).type != 9) field.type = 0
+				else if(map.get(x-1,y).type != 9 && map.get(x,y-1).type != 9 && map.get(x,y+1).type != 9) todo.push([x,y,14])
 				else if(map.get(x+1,y).type != 9 && map.get(x,y-1).type != 9 && map.get(x,y+1).type != 9) todo.push([x,y,15])
 				else if(map.get(x-1,y).type != 9 && map.get(x,y-1).type != 9) todo.push([x,y,[10,100].rnd()])
 				else if(map.get(x-1,y).type != 9 && map.get(x,y+1).type != 9) todo.push([x,y,[12,120].rnd()])
