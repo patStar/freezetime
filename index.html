@@ -95,8 +95,8 @@ DIRECTION.turn = function(direction, delta){
 	return DIRECTION.order[(DIRECTION.order.length+index+delta)%DIRECTION.order.length]
 };
 
-var lakeTiles = [9,100,110,120,130,140,150,160,170,180,190,200,210,10,11,12,13,14,15,16,17,18,19,20,21]
-
+var lakeTiles = [9,100,110,120,130,140,150,160,170,180,190,200,210,10,11,12,13,14,15,16,17,18,19,20,21,22]
+var snowStorm = 40;
 function MapDrawer(ctx, map, stepManager){
 
 	this.xShift = 0;
@@ -192,6 +192,9 @@ function MapDrawer(ctx, map, stepManager){
 				}else if(field.type == 21){
 					X=types.see_we_x.x*8;
 					Y=types.see_we_x.y*8;
+				}else if(field.type == 22){
+					X=types.single_lake.x*8;
+					Y=types.single_lake.y*8;
 				}else if(field.type == 30){
 					X=types.ground_2.x*8;
 					Y=types.ground_2.y*8;
@@ -268,6 +271,10 @@ function MapDrawer(ctx, map, stepManager){
 					}
 				}
 				
+				if(field.unitType == 'fisher_hut'){
+					ctx.drawImage(sprites,types.fisher_hut.x*8,types.fisher_hut.y*8,8,8*2,32*x,32*(y-1),32,32*2)																		
+				}
+				
 				if(field.steps){
 					if(field.steps == "fromLeft"){
 						ctx.drawImage(sprites,types.stepsRight.x*8,types.stepsRight.y*8,8,8,32*x,32*y,32,32)																		
@@ -292,8 +299,20 @@ function MapDrawer(ctx, map, stepManager){
 					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)	
 				}
 			}
-		}						
+		}	
 
+		for(var ys=-16; ys<11; ys++){
+			for(var xs=-16; xs<11; xs++){
+				var field = map.get(guy.x+xs,guy.y+ys)									
+				var x = 10+xs
+				var y = 10+ys		
+				X=types.ground.x*8;
+				Y=types.ground.y*8;
+				ctx.globalAlpha = 1-(snowStorm-Math.min(snowStorm,Math.abs(xs)+Math.abs(ys)))/snowStorm
+				ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)					
+			}
+		}
+		ctx.globalAlpha = 1
 		
 		if(map.get(guy.x,guy.y).type != 7){
 			X=types.guy.x*8;
@@ -312,7 +331,7 @@ var HEIGHT= 21*32;
 var gameCanvas, gameView, ctx, map, mapDrawer, stepManager, overlayCanvas, mapCanvas;
 
 var keysDown = [];
-var passableTypes = [30,31,32,9,0,6,10,100,110,120,130,140,150,160,170,180,190,200,210,11,12,13,14,15,16,17,18,19,20,21]
+var passableTypes = [30,31,32,9,0,6,10,100,110,120,130,140,150,160,170,180,190,200,210,11,12,13,14,15,16,17,18,19,20,21,22]
 var types = {}
 var sprites
 var guy = p(10,10)
@@ -404,7 +423,13 @@ var texts = {
 		"THIS MAN IS DEAD. HE IS FROZEN.\nI CAN'T SEE ANY WOUNDS.",
 	],
 	'house' : [
-		"SHELTER! FINALLY!\nBUT THE DOOR IS LOCKED."
+		"SHELTER! FINALLY!\nBUT THE DOOR IS LOCKED.",
+		"THIS ONE'S STILL STANDING.\nLET'S HAVE A LOOK INSIDE.",
+		"A SAFE PLACE TO HIDE\nFROM THE WIND?"
+	],
+	'fisher_hut' : [
+		"AN OLD AND ABANDONED FISHING HUT.\nAT LEAST SOME TYPE OF SHELTER.",
+		"A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE."
 	]
 }
 
@@ -445,9 +470,12 @@ function start(){
 	types.ground_4 = p(7,3)
 	types.ruin= p(8,3)
 	types.speak= p(9,3)
+	types.single_lake= p(10,3)
 	
 	types.hutStart= p(3,4)
 	types.mirror_man= p(9,4)
+	
+	types.fisher_hut= p(10,4)
 
 	textPainter = new TextPainter();
 	
@@ -477,6 +505,7 @@ function start(){
 	document.onkeydown = function(evt){
 		var code =  evt.keyCode? evt.keyCode : evt.charCode;
 		if(keysDown[code]) return
+		var moved = false;
 		if(code == 37){
 			if(!map.get(guy.x-1,guy.y).unitType && arrayContains(map.get(guy.x-1,guy.y).type,passableTypes)){
 				if(map.get(guy.x,guy.y).steps || !map.get(guy.x+1,guy.y).steps){
@@ -485,9 +514,13 @@ function start(){
 					map.get(guy.x,guy.y).steps = "fromRight";
 				}
 				guy.x = ((guy.x-1+map.width())%map.width())		
+				moved = true;
 				textPainter.reset();				
+			}else if(map.get(guy.x-1,guy.y).message){
+				globalMessage = map.get(guy.x-1,guy.y).message;
 			}else if(texts[map.get(guy.x-1,guy.y).unit]){
 				globalMessage =  texts[map.get(guy.x-1,guy.y).unit].rnd().split('\n')
+				map.get(guy.x-1,guy.y).message = globalMessage;
 			}
 		}
 		else if(code == 38){
@@ -498,9 +531,13 @@ function start(){
 					map.get(guy.x,guy.y).steps = "fromDown";
 				}
 				guy.y = ((guy.y-1+map.height())%map.height())
+				moved = true;
 				textPainter.reset();
+			}else if(map.get(guy.x,guy.y-1).message){
+				globalMessage = map.get(guy.x,guy.y-1).message;
 			}else if(texts[map.get(guy.x,guy.y-1).unit]){
 				globalMessage =  texts[map.get(guy.x,guy.y-1).unit].rnd().split('\n')
+				map.get(guy.x,guy.y-1).message = globalMessage;
 			}
 		}
 		else if(code == 39){ 
@@ -511,9 +548,13 @@ function start(){
 					map.get(guy.x,guy.y).steps = "fromLeft";
 				}
 				guy.x = ((guy.x+1+map.width())%map.width());
+				moved = true;
 				textPainter.reset();
+			}else if(map.get(guy.x+1,guy.y).message){
+				globalMessage = map.get(guy.x+1,guy.y).message;
 			}else if(texts[map.get(guy.x+1,guy.y).unit]){
-				globalMessage =  texts[map.get(guy.x+1,guy.y).unit].rnd().split('\n')
+				globalMessage =  texts[map.get(guy.x+1,guy.y).unit].rnd().split('\n');
+				map.get(guy.x+1,guy.y).message = globalMessage;
 			}
 		}
 		else if(code == 40){
@@ -524,12 +565,58 @@ function start(){
 					map.get(guy.x,guy.y).steps = "fromUp";
 				}
 				guy.y = ((guy.y+1+map.height())%map.height());	
+				moved = true;
 				textPainter.reset();			
+			}else if(map.get(guy.x,guy.y+1).message){
+				globalMessage = map.get(guy.x,guy.y+1).message;
 			}else if(texts[map.get(guy.x,guy.y+1).unit]){
 				globalMessage =  texts[map.get(guy.x,guy.y+1).unitType].rnd().split('\n')
+				map.get(guy.x,guy.y+1).message = globalMessage;
 			}
-		} else if(code == 88){
-			textPainter.reset();
+		} else if(code == 88){ // X
+			if(globalMessage) {
+				textPainter.reset();
+			}else{
+				var messages = [					
+					"HUNGRY, THIRSTY, COLD.\nBUT I'M STILL ALIVE.",					
+					"_",
+					"I WILL SURVIVE THAT DAY.\nAND THE NEXT ONE _ I MUST!",
+					"ONE STEP, THEN THE NEXT.\nTHEN THE NEXT _",
+				]
+				if(snowStorm >= 30){
+					messages.push("THE WIND IS MODERATE,\nBUT STILL FREEZING.")
+					messages.push("IT WILL GET COLDER SOON.")
+				}else {
+					messages.push("THAT WIND IS GETTING STRONGER.\nI SHOULD FIND SOME SHELTER SOON.")			
+					messages.push("_ SO FREEZING COLD _")
+					messages.push("IF ONLY THAT WIND WOULD DROP!")
+				}
+				
+				var houseNear = false;
+				for(var ys=-8; ys<9 && !houseNear; ys++){
+					for(var xs=-8; xs<9; xs++){
+						if(map.get(guy.x+xs,guy.y+ys).unitType == 'house'){
+							houseNear = true;
+							break;
+						}
+					}
+				}
+				if(houseNear){
+					messages.push("I SHOULD GO INSIDE.")
+					messages.push("THERE MIGHT BE SOME SUPPLIES LEFT\nIN THERE.")
+				}
+				globalMessage = messages.rnd().split('\n')
+			}
+		}
+		
+		if(arrayContains(code,[37,38,39,40]) && moved){
+			var r = w(10);
+			if(r==0) {
+				snowStorm = Math.min(40, snowStorm+1)				
+			}
+			if(r==1) {
+				snowStorm = Math.max(5, snowStorm-1)				
+			}
 		}
 		keysDown[code] = true;
 	}
@@ -562,7 +649,7 @@ function start(){
 	}
 	
 	// huts
-	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.001); i++){
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.0005); i++){
 		var x = w(MAP_WIDTH);
 		var y = w(MAP_HEIGHT);
 		var field = map.get(x,y)		
@@ -574,7 +661,7 @@ function start(){
 		
 		for(var ys=0; ys<2; ys++){
 			for(var xs=0; xs<len; xs++){
-				if(arrayContains(map.get(x+xs,y+ys).type,[7,70])){
+				if(arrayContains(map.get(x+xs,y+ys).type,[40,7,70])){
 					skip = true;
 				}
 			}
@@ -600,7 +687,7 @@ function start(){
 	}
 
 	// corpse
-	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.0005); i++){
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.0001); i++){
 		var x = w(MAP_WIDTH);
 		var y = w(MAP_HEIGHT);
 		var field = map.get(x,y)
@@ -626,7 +713,7 @@ function start(){
 			var xLeft = w(5)			
 			for(var X=xLeft; X<4+w(4); X++){				
 				var field = map.get(x+X,y+n);
-				if(arrayContains(field.type,[7,70])) continue;
+				if(arrayContains(field.type,[40,7,70])) continue;
 				if(field.type != 0) continue;
 				if(w(6)) field.type = [2,3,4,5].rnd();
 			}			
@@ -640,12 +727,21 @@ function start(){
 		
 		if(x<=10 && x+8>=10 || y<=10 && y+10 >= 10) continue
 		
+		var drawFisherHut = !w(20)
+		
 		for(var n=0; n<5+w(5); n++){
 			var xLeft = w(2)			
-			for(var X=xLeft; X<3+w(5); X++){
+			var xMax = 3+w(5);
+			for(var X=xLeft; X<xMax; X++){
 				var field = map.get(x+X,y+n);				
-				if(arrayContains(field.type,[7,70])) continue;
+				if(arrayContains(field.type,[40,7,70])) continue;
 				field.type = 9
+				if(drawFisherHut && !w(10) && X != xLeft && X != xMax-1 && map.get(x+X,y+n-1).type == 9){
+					field.unitType = field.unit = 'fisher_hut'
+					map.get(x+X,y+n-1).unitType = 'fisher_hut_roof'
+					map.get(x+X,y+n-1).unit = 'fisher_hut'
+					drawFisherHut = false
+				}
 			}			
 		}				
 	
@@ -657,7 +753,7 @@ function start(){
 		for(var x=0; x<map.width(); x++){
 			var field = map.get(x,y);
 			if(field.type == 9){
-				if(map.get(x-1,y).type != 9 && map.get(x,y-1).type != 9 && map.get(x,y+1).type != 9 && map.get(x+1,y).type != 9) field.type = 0
+				if(map.get(x-1,y).type != 9 && map.get(x,y-1).type != 9 && map.get(x,y+1).type != 9 && map.get(x+1,y).type != 9) field.type = 22
 				else if(map.get(x-1,y).type != 9 && map.get(x,y-1).type != 9 && map.get(x,y+1).type != 9) todo.push([x,y,14])
 				else if(map.get(x+1,y).type != 9 && map.get(x,y-1).type != 9 && map.get(x,y+1).type != 9) todo.push([x,y,15])
 				else if(map.get(x-1,y).type != 9 && map.get(x,y-1).type != 9) todo.push([x,y,[10,100].rnd()])
@@ -681,9 +777,12 @@ function start(){
 	}
 	
 	for(var i=0; i<todo.length; i++){
-		map.get(todo[i][0],todo[i][1]).type = todo[i][2]
-		map.get(todo[i][0],todo[i][1]).unit = null;
-		map.get(todo[i][0],todo[i][1]).unitType = null;
+		var field = map.get(todo[i][0],todo[i][1]);
+		field.type = todo[i][2]
+		if(field.unit != 'fisher_hut'){
+			field.unit = null;
+			field.unitType = null;
+		}
 	}		
 	
 	map.get(10,10).type = 0
