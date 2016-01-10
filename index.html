@@ -570,7 +570,7 @@ function start(){
 			}else if(map.get(guy.x,guy.y+1).message){
 				globalMessage = map.get(guy.x,guy.y+1).message;
 			}else if(texts[map.get(guy.x,guy.y+1).unit]){
-				globalMessage =  texts[map.get(guy.x,guy.y+1).unitType].rnd().split('\n')
+				globalMessage =  texts[map.get(guy.x,guy.y+1).unit].rnd().split('\n')
 				map.get(guy.x,guy.y+1).message = globalMessage;
 			}
 		} else if(code == 88){ // X
