@@ -46,6 +46,7 @@ function createCanvas(width ,height, mouseListener, id)
 
 function MapField(type){
 	this.type = type	
+	this.unit = Units.EMPTY
 }
 
 function Map(width,height){
@@ -271,7 +272,7 @@ function MapDrawer(ctx, map, stepManager){
 					}
 				}
 				
-				if(field.unitType == 'fisher_hut'){
+				if(field.unit.subType == 'fisher_hut'){
 					ctx.drawImage(sprites,types.fisher_hut.x*8,types.fisher_hut.y*8,8,8*2,32*x,32*(y-1),32,32*2)																		
 				}
 				
@@ -293,7 +294,7 @@ function MapDrawer(ctx, map, stepManager){
 					}
 				}
 				
-				if(field.unitType == 'corpse'){
+				if(field.unit.type == 'corpse'){
 					X=types.man.x*8;
 					Y=types.man.y*8;
 					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)	
@@ -335,6 +336,65 @@ var passableTypes = [30,31,32,9,0,6,10,100,110,120,130,140,150,160,170,180,190,2
 var types = {}
 var sprites
 var guy = p(10,10)
+
+var Game = {
+	time: 0,
+	player : {
+		inventory : []
+	},
+	search : {
+		unit:null,
+		searchIntervalStart: 0,
+		searchTimeToDo: 0,
+		searchTime : 0,
+		start : function(unit){
+			this.unit = unit;
+			this.searchTime = unit.searchTime;
+			this.searchTimeToDo = unit.searchTime;
+			this.searchIntervalStart = Game.time;
+		},
+		update : function(time){
+			if(this.searchTimeToDo == 0) return;
+			if(time - this.searchIntervalStart > 1000){
+				this.searchTimeToDo--
+				this.searchIntervalStart = time;
+				if(this.searchTimeToDo == 0) {
+					this.searchIntervalStart = 0;
+					this.searchTime = 0;
+					Game.findSomething(this.unit)
+				}
+			}				
+		},		
+		isSearching : function(){
+			return this.searchTimeToDo > 0;
+		}
+	},		
+	findSomething : function(unit){
+		if(unit.inventory.length == 0){
+			Game.setMessage(["THERE'S NOTHING I COULD USE."])
+		}
+		unit.searched = true;
+	},
+	currentInterest : null,
+	dialog : {
+		message : null,
+		reset : function() {
+			Game.dialog.message = null;
+			textPainter.reset();
+		},		
+	},
+	setMessageByField : function(field){			
+		if(field.unit.message){
+			Game.currentInterest = field;
+			Game.dialog.message = field.unit.message;
+		}
+	},
+	setMessage : function(message, keepCurrentInterest){						
+		if(!keepCurrentInterest) Game.currentInterest = null
+		Game.dialog.message = message
+		textPainter.reset();		
+	}	
+}
 
 function box(x,y,w,h){	
 	return {x:x, y:y, width:w, height:h}	
@@ -378,12 +438,15 @@ function TextPainter(){
 		'`' : box(127,0,6,7),
 		'´' : box(132,0,6,7),
 		'-' : box(137,0,5,7),
-		"'" : box(141,0,3,7)
+		"'" : box(141,0,3,7),
+		"[" : box(143,0,4,7),
+		"]" : box(146,0,4,7),
+		"(" : box(149,0,4,7),
+		")" : box(152,0,4,7),
 		
 	}
 	
 	this.reset = function(){
-		globalMessage = null;
 		overlayCtx.clearRect(0,0,WIDTH,HEIGHT)
 	}
 	
@@ -409,19 +472,7 @@ var texts = {
 		"THIS PLACE IS COLLAPSED.",
 		"THE REMNANTS OF A HOUSE.\nLOOKS LIKE IT COLLAPSED LONG AGO.",
 		"ONCE, THIS WAS THE HOME OF SOMEBODY.\nNOW THIS PLACE IS A RUIN."
-	],
-	'elder_man' : [
-		"THE FROZEN CORPSE OF AN ELDER MAN.\nWHAT A SHAME!",
-	],
-	'elder_women' : [
-		"THE DEAD BODY OF AN ELDER WOMAN.\nI WONDER WHAT HAPPEND TO HER OUT HERE.",
-	],
-	'women' : [
-		"THE DEAD BODY OF A WOMAN.\nWHY WAS SHE ALONE OUT HERE?",
-	],
-	'man' : [
-		"THIS MAN IS DEAD. HE IS FROZEN.\nI CAN'T SEE ANY WOUNDS.",
-	],
+	],	
 	'house' : [
 		"SHELTER! FINALLY!\nBUT THE DOOR IS LOCKED.",
 		"THIS ONE'S STILL STANDING.\nLET'S HAVE A LOOK INSIDE.",
@@ -432,6 +483,54 @@ var texts = {
 		"A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE."
 	]
 }
+
+function splitChoose(arr){
+	var msg = arr.rnd()
+	return msg?msg.split('\n'):null;
+}
+
+function Unit(type,subType,messages, lootable, minSearchTime, maxSearchTime){
+	this.type = type;
+	this.subType = subType;
+	this.message = splitChoose(messages);
+	this.inventory = [];
+	this.isLootable = function(){
+		return lootable || false;
+	}
+	this.searchTime = minSearchTime + w(maxSearchTime-minSearchTime) + 1;
+}
+
+var Units = {
+	add : function(type,subType,messages,lootable,minSearchTime,maxSearchTime){
+		if(!Units[type]) Units[type] = {}
+		if(!Units[type][subType]) Units[type][subType] = function() { return new Unit(type,subType,messages,lootable,minSearchTime,maxSearchTime)};
+	}
+}
+Units.add('corpse','elder_man'		,["THE FROZEN CORPSE OF AN ELDER MAN.\nWHAT A MESS!"], true,3,10);
+Units.add('corpse','elder_women'	,["THE DEAD BODY OF AN ELDER WOMAN.\nI WONDER WHAT HAPPENED TO HER."], true,3,10);
+Units.add('corpse','women'			,["SHE'S DEAD.\nWHAT WAS SHE DOING OUT HERE?"], true,3,10);
+Units.add('corpse','man'			,["THIS MAN IS DEAD. HE IS FROZEN.\nI CAN'T SEE ANY WOUNDS."], true,3,10);
+Units.add('building' ,'house',[
+		"SHELTER! FINALLY!\nBUT THE DOOR IS LOCKED.",
+		"THIS ONE'S STILL STANDING.\nLET'S HAVE A LOOK INSIDE.",
+		"A SAFE PLACE TO HIDE\nFROM THE WIND?"
+	]);
+Units.add('building' ,'ruin',[
+		"THIS PLACE IS COLLAPSED.",
+		"THE REMNANTS OF A HOUSE.\nLOOKS LIKE IT COLLAPSED LONG AGO.",
+		"ONCE, THIS WAS THE HOME OF SOMEBODY.\nNOW THIS PLACE IS A RUIN."
+	]);
+Units.add('building' ,'fisher_hut',[
+		"AN OLD AND ABANDONED FISHING HUT.\nAT LEAST SOME TYPE OF SHELTER.",
+		"A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE."
+	]);
+Units.add('building' ,'fisher_hut_roof',[
+		"AN OLD AND ABANDONED FISHING HUT.\nAT LEAST SOME TYPE OF SHELTER.",
+		"A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE."
+	]);		
+Units.EMPTY = new Unit('empty','empty',[])
+Units.STONE = new Unit('landscape','stone',[])
+
 
 var textPainter, overlayCtx;
 function start(){
@@ -475,7 +574,7 @@ function start(){
 	types.hutStart= p(3,4)
 	types.mirror_man= p(9,4)
 	
-	types.fisher_hut= p(10,4)
+	types.fisher_hut= p(10,4)	
 
 	textPainter = new TextPainter();
 	
@@ -506,8 +605,13 @@ function start(){
 		var code =  evt.keyCode? evt.keyCode : evt.charCode;
 		if(keysDown[code]) return
 		var moved = false;
+		
+		function isPassable(x,y){
+			return map.get(x,y).unit == Units.EMPTY && arrayContains(map.get(x,y).type,passableTypes)
+		}
+		
 		if(code == 37){
-			if(!map.get(guy.x-1,guy.y).unitType && arrayContains(map.get(guy.x-1,guy.y).type,passableTypes)){
+			if(isPassable(guy.x-1,guy.y)){
 				if(map.get(guy.x,guy.y).steps || !map.get(guy.x+1,guy.y).steps){
 					map.get(guy.x,guy.y).steps = "steps";
 				}else{
@@ -515,16 +619,15 @@ function start(){
 				}
 				guy.x = ((guy.x-1+map.width())%map.width())		
 				moved = true;
-				textPainter.reset();				
-			}else if(map.get(guy.x-1,guy.y).message){
-				globalMessage = map.get(guy.x-1,guy.y).message;
-			}else if(texts[map.get(guy.x-1,guy.y).unit]){
-				globalMessage =  texts[map.get(guy.x-1,guy.y).unit].rnd().split('\n')
-				map.get(guy.x-1,guy.y).message = globalMessage;
+				Game.dialog.reset();				
+			}else if(Game.dialog.message){
+				Game.dialog.reset();				
+			}else {
+				Game.setMessageByField(map.get(guy.x-1,guy.y));			
 			}
 		}
 		else if(code == 38){
-			if(!map.get(guy.x,guy.y-1).unitType && arrayContains(map.get(guy.x,guy.y-1).type,passableTypes)){
+			if(isPassable(guy.x,guy.y-1)){
 				if(map.get(guy.x,guy.y).steps || !map.get(guy.x,guy.y+1).steps){
 					map.get(guy.x,guy.y).steps = "steps";
 				}else{
@@ -532,16 +635,15 @@ function start(){
 				}
 				guy.y = ((guy.y-1+map.height())%map.height())
 				moved = true;
-				textPainter.reset();
-			}else if(map.get(guy.x,guy.y-1).message){
-				globalMessage = map.get(guy.x,guy.y-1).message;
-			}else if(texts[map.get(guy.x,guy.y-1).unit]){
-				globalMessage =  texts[map.get(guy.x,guy.y-1).unit].rnd().split('\n')
-				map.get(guy.x,guy.y-1).message = globalMessage;
+				Game.dialog.reset();
+			}else if(Game.dialog.message){
+				Game.dialog.reset();				
+			}else {
+				Game.setMessageByField(map.get(guy.x,guy.y-1));			
 			}
 		}
 		else if(code == 39){ 
-			if(!map.get(guy.x+1,guy.y).unitType && arrayContains(map.get(guy.x+1,guy.y).type,passableTypes)){			
+			if(isPassable(guy.x+1,guy.y)){
 				if(map.get(guy.x,guy.y).steps || !map.get(guy.x-1,guy.y).steps){
 					map.get(guy.x,guy.y).steps = "steps";
 				}else{
@@ -549,16 +651,15 @@ function start(){
 				}
 				guy.x = ((guy.x+1+map.width())%map.width());
 				moved = true;
-				textPainter.reset();
-			}else if(map.get(guy.x+1,guy.y).message){
-				globalMessage = map.get(guy.x+1,guy.y).message;
-			}else if(texts[map.get(guy.x+1,guy.y).unit]){
-				globalMessage =  texts[map.get(guy.x+1,guy.y).unit].rnd().split('\n');
-				map.get(guy.x+1,guy.y).message = globalMessage;
+				Game.dialog.reset();
+			}else if(Game.dialog.message){
+				Game.dialog.reset();				
+			}else {
+				Game.setMessageByField(map.get(guy.x+1,guy.y));			
 			}
 		}
 		else if(code == 40){
-			if(!map.get(guy.x,guy.y+1).unitType && arrayContains(map.get(guy.x,guy.y+1).type,passableTypes)){
+			if(isPassable(guy.x,guy.y+1)){
 				if(map.get(guy.x,guy.y).steps || !map.get(guy.x,guy.y-1).steps){
 					map.get(guy.x,guy.y).steps = "steps";
 				}else{
@@ -566,16 +667,18 @@ function start(){
 				}
 				guy.y = ((guy.y+1+map.height())%map.height());	
 				moved = true;
-				textPainter.reset();			
-			}else if(map.get(guy.x,guy.y+1).message){
-				globalMessage = map.get(guy.x,guy.y+1).message;
-			}else if(texts[map.get(guy.x,guy.y+1).unit]){
-				globalMessage =  texts[map.get(guy.x,guy.y+1).unit].rnd().split('\n')
-				map.get(guy.x,guy.y+1).message = globalMessage;
+				Game.dialog.reset();			
+			}else if(Game.dialog.message){
+				Game.dialog.reset();				
+			}else {
+				Game.setMessageByField(map.get(guy.x,guy.y+1));			
 			}
+		} else if(code == 67 && Game.currentInterest){ // C
+			// SEARCH current interest
+			Game.search.start(Game.currentInterest.unit);
 		} else if(code == 88){ // X
-			if(globalMessage) {
-				textPainter.reset();
+			if(Game.dialog.message) {
+				Game.dialog.reset();
 			}else{
 				var messages = [					
 					"HUNGRY, THIRSTY, COLD.\nBUT I'M STILL ALIVE.",					
@@ -595,7 +698,7 @@ function start(){
 				var houseNear = false;
 				for(var ys=-8; ys<9 && !houseNear; ys++){
 					for(var xs=-8; xs<9; xs++){
-						if(map.get(guy.x+xs,guy.y+ys).unitType == 'house'){
+						if(map.get(guy.x+xs,guy.y+ys).unit.subType == 'house'){
 							houseNear = true;
 							break;
 						}
@@ -605,7 +708,7 @@ function start(){
 					messages.push("I SHOULD GO INSIDE.")
 					messages.push("THERE MIGHT BE SOME SUPPLIES LEFT\nIN THERE.")
 				}
-				globalMessage = messages.rnd().split('\n')
+				Game.dialog.message = messages.rnd().split('\n')
 			}
 		}
 		
@@ -645,6 +748,7 @@ function start(){
 	// stones
 	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.007); i++){
 		var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT))
+		field.unit = Units.STONE;
 		field.type = 8
 	}
 	
@@ -669,19 +773,17 @@ function start(){
 		if(skip) continue;
 		
 		if(w(3)){
+			var house = Units.building.house();
 			for(var ys=0; ys<2; ys++){				
 				for(var xs=0; xs<len; xs++){
-					map.get(x+xs,y+ys).unit = map.get(x+xs,y+ys).unitType = 'house'
-					map.get(x+xs,y+ys).type = 70
-					map.get(x+xs,y+ys).houseId = i;
+					map.get(x+xs,y+ys).unit = house;
+					map.get(x+xs,y+ys).type = 70					
 				}
 			}
 			field.type = 7
-			field.houseLength = len;
-			
-			
+			field.houseLength = len;						
 		}else{
-			field.unit = field.unitType = 'ruin'
+			field.unit = field.unit = Units.building.ruin();
 			field.type = 40;
 		}
 	}
@@ -694,11 +796,10 @@ function start(){
 		if(arrayContains(field.type,passableTypes)){
 			men.push(p(x,y));
 			var r = w(4)
-			if(r==0) map.get(x,y).unit = 'elder_man'
-			else if(r==1) map.get(x,y).unit = 'elder_women'
-			else if(r==2) map.get(x,y).unit = 'man'
-			else if(r==3) map.get(x,y).unit = 'women'
-			map.get(x,y).unitType = 'corpse'
+			if(r==0) map.get(x,y).unit = Units.corpse.elder_man();
+			else if(r==1) map.get(x,y).unit = Units.corpse.elder_women();
+			else if(r==2) map.get(x,y).unit = Units.corpse.man();
+			else if(r==3) map.get(x,y).unit = Units.corpse.women();			
 		}
 	}
 
@@ -716,10 +817,11 @@ function start(){
 				if(arrayContains(field.type,[40,7,70])) continue;
 				if(field.type != 0) continue;
 				if(w(6)) field.type = [2,3,4,5].rnd();
+				else if(!w(3)) field.type = 6
 			}			
 		}				
 	}
-	
+		
 	// lake
 	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
 		var x = w(MAP_WIDTH)
@@ -737,9 +839,9 @@ function start(){
 				if(arrayContains(field.type,[40,7,70])) continue;
 				field.type = 9
 				if(drawFisherHut && !w(10) && X != xLeft && X != xMax-1 && map.get(x+X,y+n-1).type == 9){
-					field.unitType = field.unit = 'fisher_hut'
-					map.get(x+X,y+n-1).unitType = 'fisher_hut_roof'
-					map.get(x+X,y+n-1).unit = 'fisher_hut'
+					field.unit = Units.building.fisher_hut();
+					map.get(x+X,y+n-1).unit = Units.building.fisher_hut_roof();
+					map.get(x+X,y+n-1).unit.message = field.unit.message					
 					drawFisherHut = false
 				}
 			}			
@@ -780,8 +882,7 @@ function start(){
 		var field = map.get(todo[i][0],todo[i][1]);
 		field.type = todo[i][2]
 		if(field.unit != 'fisher_hut'){
-			field.unit = null;
-			field.unitType = null;
+			field.unit = Units.EMPTY			
 		}
 	}		
 	
@@ -810,21 +911,43 @@ function drawMouse(){
 var men = [];
 var lastTime = 0;
 var stepTime = 150;
-var globalMessage = null
 function tick(time){
+	Game.time = time;
 	if(time-lastTime > stepTime){
 		lastTime = time;		
-		mapDrawer.draw();
+		mapDrawer.draw();		
 	}	
 		
-	if(globalMessage){		
+	Game.search.update(time)
+	if(Game.search.isSearching()){	
+		var n = Game.search.searchTime - Game.search.searchTimeToDo + 1 	
+		Game.setMessage(["LET'S SEE IF I CAN FIND SOMETHING","",""," ".repeat(Math.floor(Game.search.searchTime/3))+"["+"I".repeat(n)+".".repeat(Game.search.searchTimeToDo-1)+"]"])		
+	}
+		
+	if(Game.dialog.message){			
+
 		overlayCtx.fillStyle = "#21262b"
 		overlayCtx.fillRect(0,13*32-5-1*4,WIDTH,100)
 		overlayCtx.fillStyle = "#e0f0f0"
-		overlayCtx.fillRect(0,13*32-5,WIDTH,100 - 2*4)
+		overlayCtx.fillRect(0,13*32-5,WIDTH,100- 2*4)
+	
 		overlayCtx.drawImage(sprites,types.speak.x*8,types.speak.y*8,8,8,10*32,12*32-1*5,32,32)
-		for(var message of globalMessage){
-			textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),13*32+10+(7*4)*globalMessage.indexOf(message));
+		for(var message of Game.dialog.message){
+			textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),13*32+10+(7*4)*Game.dialog.message.indexOf(message));
+		}
+		
+		if(Game.currentInterest && Game.currentInterest.unit.isLootable() && !Game.currentInterest.unit.searched){
+			overlayCtx.fillStyle = "#21262b"
+			overlayCtx.fillRect(2*32,16*32+8,6*32,32+16)
+			overlayCtx.fillStyle = "#e0f0f0"
+			overlayCtx.fillRect(2*32+4,16*32+8+4,6*32-8,32+16-8)
+			textPainter.drawText("(X) IGNORE",overlayCtx,2*32+16,16*32+18);
+		
+			overlayCtx.fillStyle = "#21262b"
+			overlayCtx.fillRect(13*32,16*32+8,6*32,32+16)
+			overlayCtx.fillStyle = "#e0f0f0"
+			overlayCtx.fillRect(13*32+4,16*32+8+4,6*32-8,32+16-8)
+			textPainter.drawText("(C) SEARCH",overlayCtx,13*32+16,16*32+18);
 		}
 	}
 	
