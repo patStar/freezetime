@@ -96,7 +96,7 @@ DIRECTION.turn = function(direction, delta){
 };
 
 var lakeTiles = [9,100,110,120,130,140,150,160,170,180,190,200,210,10,11,12,13,14,15,16,17,18,19,20,21,22]
-var snowStorm = 40;
+var snowStorm = 8+w(21);
 function MapDrawer(ctx, map, stepManager){
 
 	this.xShift = 0;
@@ -583,7 +583,7 @@ function start(){
 					"I WILL SURVIVE THAT DAY.\nAND THE NEXT ONE _ I MUST!",
 					"ONE STEP, THEN THE NEXT.\nTHEN THE NEXT _",
 				]
-				if(snowStorm >= 30){
+				if(snowStorm >= 20){
 					messages.push("THE WIND IS MODERATE,\nBUT STILL FREEZING.")
 					messages.push("IT WILL GET COLDER SOON.")
 				}else {
