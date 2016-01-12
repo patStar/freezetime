@@ -13,6 +13,18 @@ function img(src) {
 }
 function w(x) {return Math.floor(Math.random()*x)}
 
+function AnimatedSprite(image,frames){
+	var currentFrame = 0;
+	this.tick = function(){
+		currentFrame = (currentFrame+1)%frames.length
+	}	
+	this.draw =function (ctx,bounding){
+		var frame = frames[currentFrame];		
+		ctx.drawImage(image,frame.x,frame.y,frame.width,frame.height,bounding.x,bounding.y,bounding.width,bounding.height)
+	}
+}
+AnimatedSprite.all = {};
+
 function MouseListener(){}
 MouseListener.onMouseDown = function(evt){	
 	for(var i=0; i<MouseListener.registeredClients.mouseDown.length; i++){
@@ -121,11 +133,12 @@ function MapDrawer(ctx, map, stepManager){
 	}
 
 	this.draw = function(){
-		ctx.clearRect(0,0,WIDTH,HEIGHT)		
+		ctx.fillRect(0,0,WIDTH,HEIGHT)		
 		ctx.fillStyle="grey"
-		for(var ys=-16; ys<11; ys++){
-			for(var xs=-16; xs<11; xs++){
-				var field = map.get(guy.x+xs,guy.y+ys)					
+		ctx.translate(Game.player.mapShift.x,Game.player.mapShift.y)
+		for(var ys=-16; ys<12; ys++){
+			for(var xs=-16; xs<12; xs++){
+				var field = map.get(Game.player.position.x+xs,Game.player.position.y+ys)					
 				if(field.type == 70) continue;
 				var x = 10+xs
 				var y = 10+ys				
@@ -209,6 +222,19 @@ function MapDrawer(ctx, map, stepManager){
 					X=types.ruin.x*8;
 					Y=types.ruin.y*8;
 				}
+				else if(field.type == 61){
+					X=types.grass_2.x*8;
+					Y=types.grass_2.y*8;
+				}else if(field.type == 62){
+					X=types.grass_3.x*8;
+					Y=types.grass_3.y*8;
+				}else if(field.type == 63){
+					X=types.grass_4.x*8;
+					Y=types.grass_4.y*8;
+				}else if(field.type == 64){
+					X=types.grass_5.x*8;
+					Y=types.grass_5.y*8;
+				}
 				else if(field.type == 100){
 					X=types.see_n_w.x*8;
 					Y=(1+types.see_n_w.y)*8;
@@ -248,9 +274,13 @@ function MapDrawer(ctx, map, stepManager){
 				}
 				
 				if(arrayContains(field.type,lakeTiles)){					
-					ctx.drawImage(sprites,types.see.x*8,types.see.y*8,8,8,32*x,32*y,32,32)																		
+					ctx.drawImage(sprites,types.see.x*8,types.see.y*8,8,8,32*x,32*y,32,32)																							
 					if(xs==0 && ys==1){					
-						ctx.drawImage(sprites,types.mirror_man.x*8,types.mirror_man.y*8,8,8,32*x,32*y,32,32)	
+						if(Game.player.moving && (arrayContains(map.get(Game.player.position.x+xs,Game.player.position.y+ys-1).type,lakeTiles) || Game.player.movingDirection.y != -1) && (arrayContains(map.get(Game.player.position.x+xs-1,Game.player.position.y+ys).type,lakeTiles) || Game.player.movingDirection.x != -1) && (arrayContains(map.get(Game.player.position.x+xs+1,Game.player.position.y+ys).type,lakeTiles) || Game.player.movingDirection.x != 1)){				
+							ctx.drawImage(sprites,types.mirror_man.x*8,types.mirror_man.y*8,8,8,32*10-Game.player.mapShift.x,32*11-Game.player.mapShift.y,32,32)								
+						}else{
+							ctx.drawImage(sprites,types.mirror_man.x*8,types.mirror_man.y*8,8,8,32*x,32*y,32,32)	
+						}
 					}			
 				}
 				
@@ -294,7 +324,15 @@ function MapDrawer(ctx, map, stepManager){
 					}
 				}
 				
-				if(field.unit.type == 'corpse'){
+				if(field.unit.subType == 'twig'){
+					X=types.twig.x*8;
+					Y=types.twig.y*8;
+					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)	
+				}else if(field.unit.subType == 'unknownInTheSnow'){
+					X=types.unknown_item.x*8;
+					Y=types.unknown_item.y*8;
+					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)	
+				}else if(field.unit.type == 'corpse'){
 					X=types.man.x*8;
 					Y=types.man.y*8;
 					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)	
@@ -302,9 +340,9 @@ function MapDrawer(ctx, map, stepManager){
 			}
 		}	
 
-		for(var ys=-16; ys<11; ys++){
-			for(var xs=-16; xs<11; xs++){
-				var field = map.get(guy.x+xs,guy.y+ys)									
+		for(var ys=-16; ys<12; ys++){
+			for(var xs=-16; xs<12; xs++){
+				var field = map.get(Game.player.position.x+xs,Game.player.position.y+ys)									
 				var x = 10+xs
 				var y = 10+ys		
 				X=types.ground.x*8;
@@ -315,11 +353,29 @@ function MapDrawer(ctx, map, stepManager){
 		}
 		ctx.globalAlpha = 1
 		
-		if(map.get(guy.x,guy.y).type != 7){
+		if(map.get(Game.player.position.x,Game.player.position.y).type != 7){
 			X=types.guy.x*8;
 			Y=types.guy.y*8;
-			ctx.drawImage(sprites,X,Y,8,8,32*10,32*10,32,32)							
+			if(Game.player.moving){				
+				if(Game.player.movingDirection.y == -1){
+					if(Game.player.movingDirection.x == -1){
+						AnimatedSprite.all.PLAYER_CHAR_MAN_BACK_LEFT.draw(ctx,box(32*10-Game.player.mapShift.x,32*10-Game.player.mapShift.y,32,32))
+					}else{
+						AnimatedSprite.all.PLAYER_CHAR_MAN_BACK.draw(ctx,box(32*10-Game.player.mapShift.x,32*10-Game.player.mapShift.y,32,32))
+					}
+				}else{
+					if(Game.player.movingDirection.x == -1){
+						AnimatedSprite.all.PLAYER_CHAR_MAN_LEFT.draw(ctx,box(32*10-Game.player.mapShift.x,32*10-Game.player.mapShift.y,32,32))
+					}else{
+						AnimatedSprite.all.PLAYER_CHAR_MAN.draw(ctx,box(32*10-Game.player.mapShift.x,32*10-Game.player.mapShift.y,32,32))
+					}					
+				}
+			}else{
+				ctx.drawImage(sprites,X,Y,8,8,32*10,32*10,32,32)							
+			}
 		}
+		
+		ctx.translate(-Game.player.mapShift.x,-Game.player.mapShift.y)
 	}
 }
 
@@ -332,36 +388,81 @@ var HEIGHT= 21*32;
 var gameCanvas, gameView, ctx, map, mapDrawer, stepManager, overlayCanvas, mapCanvas;
 
 var keysDown = [];
-var passableTypes = [30,31,32,9,0,6,10,100,110,120,130,140,150,160,170,180,190,200,210,11,12,13,14,15,16,17,18,19,20,21,22]
+var passableTypes = [30,31,32,9,0,6,10,100,110,120,130,140,150,160,170,180,190,200,210,11,12,13,14,15,16,17,18,19,20,21,22,61,62,63,64]
 var types = {}
 var sprites
-var guy = p(10,10)
 
 var Game = {
 	time: 0,
+	isPassable : function (x,y){
+		return arrayContains(map.get(x,y).unit.subType,[Units.EMPTY.subType]) && arrayContains(map.get(x,y).type,passableTypes)
+	},
 	player : {
-		inventory : []
+		inventory : [],
+		moving : false,
+		mapShift : p(0,0),
+		maxShift : p(32,32),
+		position : p(10,10),
+		movingDirection : p(0,0),
+		startTime : 0,
+		startMoving : function(direction){ 			
+			this.movingDirection = direction;
+			this.startTime = Date.now();
+			if(!this.moving){
+				var speed = 2
+				if(direction.x ==0 || direction.y == 0) speed = 2
+				this.mapShift.x += speed*-this.movingDirection.x
+				this.mapShift.y += speed*-this.movingDirection.y			
+				this.moving = true;
+			}
+		},
+		stopMoving : function(){ 			
+			this.movingDirection = p(0,0)
+			this.mapShift = p(0,0)
+			this.moving = false;
+		},
+		move : function(){
+			if(!this.moving) return
+			var speed = 2;
+			if(this.movingDirection.x ==0 || this.movingDirection.y == 0) speed = 2
+			this.mapShift.x -= speed*this.movingDirection.x
+			this.mapShift.y -= speed*this.movingDirection.y
+			if(Math.abs(this.mapShift.x) >= this.maxShift.x || Math.abs(this.mapShift.y) >= this.maxShift.y){
+				Game.player.position.x = ((Game.player.position.x+this.movingDirection.x+map.width())%map.width())
+				Game.player.position.y = ((Game.player.position.y+this.movingDirection.y+map.height())%map.height())
+				this.stopMoving();				
+			}
+		}
 	},
 	search : {
 		unit:null,
 		searchIntervalStart: 0,
 		searchTimeToDo: 0,
 		searchTime : 0,
-		start : function(unit){
+		outcome : null,
+		message : null,
+		defaultOutcome : function(){
+			this.searchIntervalStart = 0;
+			this.searchTime = 0;
+			Game.findSomething(Game.search.unit)
+		},
+		start : function(unit,outcome,text){
+			this.message = text || "LET'S SEE IF I CAN FIND SOMETHING";
 			this.unit = unit;
 			this.searchTime = unit.searchTime;
 			this.searchTimeToDo = unit.searchTime;
 			this.searchIntervalStart = Game.time;
+			this.outcome = outcome;
 		},
 		update : function(time){
 			if(this.searchTimeToDo == 0) return;
 			if(time - this.searchIntervalStart > 1000){
 				this.searchTimeToDo--
 				this.searchIntervalStart = time;
-				if(this.searchTimeToDo == 0) {
-					this.searchIntervalStart = 0;
-					this.searchTime = 0;
-					Game.findSomething(this.unit)
+				if(this.searchTimeToDo == 0) {					
+					(this.outcome || this.defaultOutcome)(this.unit);
+					this.outcome = null;
+					this.message = null;
 				}
 			}				
 		},		
@@ -383,8 +484,9 @@ var Game = {
 			textPainter.reset();
 		},		
 	},
-	setMessageByField : function(field){			
-		if(field.unit.message){
+	setMessageByField : function(field){					
+		Game.currentInterest = null;
+		if(field.unit.message || field.unit.canBePickedUp()){			
 			Game.currentInterest = field;
 			Game.dialog.message = field.unit.message;
 		}
@@ -497,13 +599,63 @@ function Unit(type,subType,messages, lootable, minSearchTime, maxSearchTime){
 	this.isLootable = function(){
 		return lootable || false;
 	}
+	this.canBePickedUp = function(){return false};
+	this.canBeDiggedUp = function(){return false};
 	this.searchTime = minSearchTime + w(maxSearchTime-minSearchTime) + 1;
+}
+
+function UnitPickupItem(name,subType,messages){
+	this.name = name;
+	this.type = 'item';
+	this.subType = subType;
+	this.message = splitChoose(messages);
+	this.inventory = [name];
+	this.isLootable = function(){return false;}
+	this.canBePickedUp = function(){return true};
+	this.canBeDiggedUp = function(){return false};
+	this.searchTime = 0;
+}
+
+function UnitDigUpItem(subType,messages, minSearchTime, maxSearchTime,loot){
+
+	var sum = 0;
+	for(var i=0; i<loot.length; i++){
+		sum += loot[i].probability
+	}
+	var r = Math.random()*sum
+	var current = 0;
+	for(var i=0; i<loot.length; i++){
+		if(current + loot[i].probability >= r){
+			this.loot = loot[i];
+		}
+		current += loot[i].probability		
+	}	
+
+	this.type = 'item';
+	this.subType = subType;
+	this.message = splitChoose(messages);
+	this.inventory = [name];	
+	this.isLootable = function(){return false;}
+	this.canBePickedUp = function(){return false};
+	this.canBeDiggedUp = function(){return true};
+	this.searchTime = this.loot.min + w(this.loot.max-this.loot.min) + 1;
+	this.digUp = function(){
+		return this.loot.unit();
+	}
 }
 
 var Units = {
 	add : function(type,subType,messages,lootable,minSearchTime,maxSearchTime){
 		if(!Units[type]) Units[type] = {}
 		if(!Units[type][subType]) Units[type][subType] = function() { return new Unit(type,subType,messages,lootable,minSearchTime,maxSearchTime)};
+	},
+	addPickupItem : function(name,subType,messages){
+		if(!Units['item']) Units['item'] = {}
+		if(!Units['item'][subType]) Units['item'][subType] = function() { return new UnitPickupItem(name,subType,messages)};
+	},
+	addDigUpItem : function(subType,messages,minSearchTime,maxSearchTime,loot){
+		if(!Units['item']) Units['item'] = {}
+		if(!Units['item'][subType]) Units['item'][subType] = function() { return new UnitDigUpItem(subType,messages,minSearchTime,maxSearchTime,loot)};
 	}
 }
 Units.add('corpse','elder_man'		,["THE FROZEN CORPSE OF AN ELDER MAN.\nWHAT A MESS!"], true,3,10);
@@ -530,12 +682,38 @@ Units.add('building' ,'fisher_hut_roof',[
 	]);		
 Units.EMPTY = new Unit('empty','empty',[])
 Units.STONE = new Unit('landscape','stone',[])
+Units.addPickupItem('SMALL BRANCH','twig',[]);//['A SMALL BRANCH',"HERE'S A SMALL BRANCH","A SMALL BRANCH. COULD BE HELPFULL\nSTARTING A FIRE."]);
+Units.addDigUpItem('unknownInTheSnow',['THERE IS SOMETHING BENEATH THE SNOW.'],3,6,[
+	new Diggable(Units.item.twig,2,3,10),
+	new Diggable(Units.corpse.elder_man,4,6,1),
+	new Diggable(Units.corpse.elder_women,4,6,1),
+	new Diggable(Units.corpse.man,4,6,1),
+	new Diggable(Units.corpse.women,4,6,1)]);
 
+function Diggable(unit,min,max,probability){
+	this.unit =unit;
+	this.min = min;
+	this.max=max;
+	this.probability=probability;
+}
+
+function pressKey(keyCode){
+	keysDown[keyCode] = true;
+}
+function releaseKey(keyCode){
+	keysDown[keyCode] = false;
+}
 
 var textPainter, overlayCtx;
 function start(){
 	
 	sprites = img('sprites.png')
+	
+	AnimatedSprite.all.PLAYER_CHAR_MAN = new AnimatedSprite(sprites,[box(1*8,6*8,8,8),box(2*8,6*8,8,8)])
+	AnimatedSprite.all.PLAYER_CHAR_MAN_LEFT = new AnimatedSprite(sprites,[box(5*8,7*8,8,8),box(6*8,7*8,8,8)])
+	AnimatedSprite.all.PLAYER_CHAR_MAN_BACK = new AnimatedSprite(sprites,[box(1*8,7*8,8,8),box(2*8,7*8,8,8)])
+	AnimatedSprite.all.PLAYER_CHAR_MAN_BACK_LEFT = new AnimatedSprite(sprites,[box(3*8,7*8,8,8),box(4*8,7*8,8,8)])
+	
 	types.guy = p(0,0)
 	types.man = p(0,3)
 	types.tree1 = p(1,0)
@@ -543,6 +721,13 @@ function start(){
 	types.tree3 = p(3,0)
 	types.tree4 = p(4,0)
 	types.grass = p(5,0)
+	types.grass_2 = p(3,6)
+	types.grass_3 = p(4,6)
+	types.grass_4 = p(5,6)
+	types.grass_5 = p(6,6)
+	types.twig = p(7,6)
+	types.unknown_item = p(8,6)
+	
 	types.house = p(6,0)
 	types.hole = p(7,0)
 	types.stepsRight = p(8,0)	
@@ -604,79 +789,50 @@ function start(){
 	document.onkeydown = function(evt){
 		var code =  evt.keyCode? evt.keyCode : evt.charCode;
 		if(keysDown[code]) return
-		var moved = false;
+		var moved = false;		
 		
-		function isPassable(x,y){
-			return map.get(x,y).unit == Units.EMPTY && arrayContains(map.get(x,y).type,passableTypes)
+		if(code == KeyCode.LEFT){
+			pressKey(KeyCode.LEFT)				
 		}
-		
-		if(code == 37){
-			if(isPassable(guy.x-1,guy.y)){
-				if(map.get(guy.x,guy.y).steps || !map.get(guy.x+1,guy.y).steps){
-					map.get(guy.x,guy.y).steps = "steps";
-				}else{
-					map.get(guy.x,guy.y).steps = "fromRight";
-				}
-				guy.x = ((guy.x-1+map.width())%map.width())		
-				moved = true;
-				Game.dialog.reset();				
-			}else if(Game.dialog.message){
-				Game.dialog.reset();				
-			}else {
-				Game.setMessageByField(map.get(guy.x-1,guy.y));			
-			}
+		else if(code == KeyCode.UP){
+			pressKey(KeyCode.UP)			
 		}
-		else if(code == 38){
-			if(isPassable(guy.x,guy.y-1)){
-				if(map.get(guy.x,guy.y).steps || !map.get(guy.x,guy.y+1).steps){
-					map.get(guy.x,guy.y).steps = "steps";
-				}else{
-					map.get(guy.x,guy.y).steps = "fromDown";
+		else if(code == KeyCode.RIGHT){ 
+			pressKey(KeyCode.RIGHT)			
+		}
+		else if(code == KeyCode.DOWN){
+			pressKey(KeyCode.DOWN)			
+		} else if(code == KeyCode.C){
+			pressKey(KeyCode.C)
+			if(Game.currentInterest){
+				if(Game.currentInterest.unit.isLootable()){
+					// SEARCH current interest
+					Game.search.start(Game.currentInterest.unit);
+				}else if(Game.currentInterest.unit.canBePickedUp()){
+					// PICK UP current interest
+					Game.currentInterest.unit = Units.EMPTY;
+					if(!w(3)) {
+						Game.setMessage([['GOT IT!'],['THAT WILL BE USEFUL'],['MIGHT BE USEFUL'],["THAT'LL COME IN HANDY."],['I CAN USE THAT'],['OKAY.'],['GOOD.']].rnd())
+					}else{
+						Game.dialog.reset()
+					}				
+				}else if(Game.currentInterest.unit.canBeDiggedUp()){
+					// DIG UP current interest									
+					Game.search.start(Game.currentInterest.unit, function(){
+						var newUnit = Game.currentInterest.unit.digUp()
+						Game.currentInterest.unit = newUnit;
+						Game.search.unit = newUnit;
+						Game.dialog.reset();
+						Game.setMessageByField(Game.currentInterest);							
+					}, "WHAT HAVE WE HERE?");					
+				}else{			
+					Game.dialog.reset();
 				}
-				guy.y = ((guy.y-1+map.height())%map.height())
-				moved = true;
+			}else{			
 				Game.dialog.reset();
-			}else if(Game.dialog.message){
-				Game.dialog.reset();				
-			}else {
-				Game.setMessageByField(map.get(guy.x,guy.y-1));			
 			}
-		}
-		else if(code == 39){ 
-			if(isPassable(guy.x+1,guy.y)){
-				if(map.get(guy.x,guy.y).steps || !map.get(guy.x-1,guy.y).steps){
-					map.get(guy.x,guy.y).steps = "steps";
-				}else{
-					map.get(guy.x,guy.y).steps = "fromLeft";
-				}
-				guy.x = ((guy.x+1+map.width())%map.width());
-				moved = true;
-				Game.dialog.reset();
-			}else if(Game.dialog.message){
-				Game.dialog.reset();				
-			}else {
-				Game.setMessageByField(map.get(guy.x+1,guy.y));			
-			}
-		}
-		else if(code == 40){
-			if(isPassable(guy.x,guy.y+1)){
-				if(map.get(guy.x,guy.y).steps || !map.get(guy.x,guy.y-1).steps){
-					map.get(guy.x,guy.y).steps = "steps";
-				}else{
-					map.get(guy.x,guy.y).steps = "fromUp";
-				}
-				guy.y = ((guy.y+1+map.height())%map.height());	
-				moved = true;
-				Game.dialog.reset();			
-			}else if(Game.dialog.message){
-				Game.dialog.reset();				
-			}else {
-				Game.setMessageByField(map.get(guy.x,guy.y+1));			
-			}
-		} else if(code == 67 && Game.currentInterest){ // C
-			// SEARCH current interest
-			Game.search.start(Game.currentInterest.unit);
-		} else if(code == 88){ // X
+		} else if(code == KeyCode.X){
+			pressKey(KeyCode.X)			
 			if(Game.dialog.message) {
 				Game.dialog.reset();
 			}else{
@@ -698,7 +854,7 @@ function start(){
 				var houseNear = false;
 				for(var ys=-8; ys<9 && !houseNear; ys++){
 					for(var xs=-8; xs<9; xs++){
-						if(map.get(guy.x+xs,guy.y+ys).unit.subType == 'house'){
+						if(map.get(Game.player.position.x+xs,Game.player.position.y+ys).unit.subType == 'house'){
 							houseNear = true;
 							break;
 						}
@@ -720,8 +876,7 @@ function start(){
 			if(r==1) {
 				snowStorm = Math.max(5, snowStorm-1)				
 			}
-		}
-		keysDown[code] = true;
+		}		
 	}
 	document.onkeyup = function(evt){
 		var code =  evt.keyCode? evt.keyCode : evt.charCode;
@@ -740,7 +895,7 @@ function start(){
 			for(var X=xLeft; X<4+w(4); X++){
 				var field = map.get(x+X,y+n);
 				if(field.type != 0) continue;
-				if(w(6))field.type = 6;
+				if(w(6))field.type = [6,61,62,63,64].rnd();
 			}			
 		}				
 	}
@@ -836,7 +991,7 @@ function start(){
 			var xMax = 3+w(5);
 			for(var X=xLeft; X<xMax; X++){
 				var field = map.get(x+X,y+n);				
-				if(arrayContains(field.type,[40,7,70])) continue;
+				if(arrayContains(field.type,[40,7,70,8])) continue;
 				field.type = 9
 				if(drawFisherHut && !w(10) && X != xLeft && X != xMax-1 && map.get(x+X,y+n-1).type == 9){
 					field.unit = Units.building.fisher_hut();
@@ -877,14 +1032,30 @@ function start(){
 			}
 		}
 	}
-	
+		
 	for(var i=0; i<todo.length; i++){
 		var field = map.get(todo[i][0],todo[i][1]);
 		field.type = todo[i][2]
-		if(field.unit != 'fisher_hut'){
+		if(!arrayContains(field.unit.subType,['fisher_hut','fisher_hut_roof'])){
 			field.unit = Units.EMPTY			
 		}
 	}		
+	
+	// items
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.006); i++){
+		var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT))
+		if(field.type != 0) continue;
+		
+		field.unit = Units.item.twig();				
+	}
+	
+	// hidden items
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.0005); i++){
+		var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT))
+		if(field.type != 0) continue;
+		
+		field.unit = Units.item.unknownInTheSnow();		
+	}
 	
 	map.get(10,10).type = 0
 	
@@ -908,20 +1079,141 @@ function drawMouse(){
 	}
 }
 
+var KeyCode = {
+	LEFT : 37,
+	UP : 38,
+	RIGHT : 39,
+	DOWN : 40,
+	C : 67,
+	X : 88,	
+}
+
 var men = [];
 var lastTime = 0;
-var stepTime = 150;
+var stepTime = 50;
+var lastAnimationTime = 0;
+var animationStepTime = 250;
 function tick(time){
 	Game.time = time;
 	if(time-lastTime > stepTime){
-		lastTime = time;		
-		mapDrawer.draw();		
+		lastTime = time;			
+		mapDrawer.draw();					
+	}			
+	if(time-lastAnimationTime > animationStepTime){
+		lastAnimationTime = time;	
+		AnimatedSprite.all.PLAYER_CHAR_MAN.tick()		
+		AnimatedSprite.all.PLAYER_CHAR_MAN_LEFT.tick()		
+		AnimatedSprite.all.PLAYER_CHAR_MAN_BACK.tick()		
+		AnimatedSprite.all.PLAYER_CHAR_MAN_BACK_LEFT.tick()
+	}		
+	
+	if(Game.player.moving){
+		Game.player.move();
+	}		
+	
+	// diagonal movement
+	if((keysDown[KeyCode.LEFT] || keysDown[KeyCode.RIGHT]) && (keysDown[KeyCode.UP] ||  keysDown[KeyCode.DOWN])){		
+		var direction;
+		if(keysDown[KeyCode.LEFT] && keysDown[KeyCode.UP]) {
+			direction = p(-1,-1)				
+		}else if(keysDown[KeyCode.LEFT] && keysDown[KeyCode.DOWN]) {
+			direction = p(-1,1)				
+		}else if(keysDown[KeyCode.RIGHT] && keysDown[KeyCode.UP]) {
+			direction = p(1,-1)				
+		}else{
+			direction = p(1,1)				
+		}
+		
+		if(!Game.isPassable(Game.player.position.x+direction.x,Game.player.position.y+direction.y)){
+			if(Game.isPassable(Game.player.position.x,Game.player.position.y+direction.y)){
+				direction.x = 0
+			}else{
+				direction.y = 0
+			}
+		}
+		
+		
+		if(Game.isPassable(Game.player.position.x+direction.x,Game.player.position.y+direction.y)){
+			map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+			Game.player.startMoving(direction)
+			Game.dialog.reset();				
+		}else if(Game.dialog.message){
+			Game.dialog.reset();				
+		}else {
+			Game.setMessageByField(map.get(Game.player.position.x+direction.x,Game.player.position.y+direction.y));			
+		}
+	} else if(!Game.player.moving){
+		if(keysDown[KeyCode.LEFT] && !Game.player.moving){		
+			if(Game.isPassable(Game.player.position.x-1,Game.player.position.y)){
+				if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x+1,Game.player.position.y).steps){
+					map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+				}else{
+					map.get(Game.player.position.x,Game.player.position.y).steps = "fromRight";
+				}
+				Game.player.startMoving(p(-1,0))
+				Game.dialog.reset();		
+				Game.setMessageByField(map.get(Game.player.position.x-1,Game.player.position.y));					
+			}else {
+				if(Game.dialog.message){
+					Game.dialog.reset();				
+				}	
+				Game.setMessageByField(map.get(Game.player.position.x-1,Game.player.position.y));			
+			}
+		} else if(keysDown[KeyCode.RIGHT] && !Game.player.moving){		
+			if(Game.isPassable(Game.player.position.x+1,Game.player.position.y)){
+				if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x-1,Game.player.position.y).steps){
+					map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+				}else{
+					map.get(Game.player.position.x,Game.player.position.y).steps = "fromLeft";
+				}
+				Game.player.startMoving(p(1,0))
+				Game.dialog.reset();				
+				Game.setMessageByField(map.get(Game.player.position.x+1,Game.player.position.y));	
+			}else {
+				if(Game.dialog.message){
+					Game.dialog.reset();				
+				}	
+				Game.setMessageByField(map.get(Game.player.position.x+1,Game.player.position.y));			
+			}		
+		} else if(keysDown[KeyCode.UP] && !Game.player.moving){		
+			if(Game.isPassable(Game.player.position.x,Game.player.position.y-1)){
+				if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x,Game.player.position.y+1).steps){
+					map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+				}else{
+					map.get(Game.player.position.x,Game.player.position.y).steps = "fromDown";
+				}
+				Game.player.startMoving(p(0,-1))
+				Game.dialog.reset();				
+				Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y-1));
+			}else {
+				if(Game.dialog.message){
+					Game.dialog.reset();				
+				}	
+				Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y-1));			
+			}		
+		} else if(keysDown[KeyCode.DOWN] && !Game.player.moving){		
+			if(Game.isPassable(Game.player.position.x,Game.player.position.y+1)){
+				if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x,Game.player.position.y-1).steps){
+					map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+				}else{
+					map.get(Game.player.position.x,Game.player.position.y).steps = "fromUp";
+				}
+				Game.player.startMoving(p(0,1))
+				Game.dialog.reset();				
+				Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y+1));
+			}else {
+				if(Game.dialog.message){
+					Game.dialog.reset();				
+				}	
+				Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y+1));			
+			}
+		}
 	}	
 		
 	Game.search.update(time)
 	if(Game.search.isSearching()){	
 		var n = Game.search.searchTime - Game.search.searchTimeToDo + 1 	
-		Game.setMessage(["LET'S SEE IF I CAN FIND SOMETHING","",""," ".repeat(Math.floor(Game.search.searchTime/3))+"["+"I".repeat(n)+".".repeat(Game.search.searchTimeToDo-1)+"]"])		
+		Game.setMessage([Game.search.message,"",""," ".repeat(Math.floor(Game.search.searchTime/3))+"["+"I".repeat(n)+".".repeat(Game.search.searchTimeToDo-1)+"]"],true)		
 	}
 		
 	if(Game.dialog.message){			
@@ -936,19 +1228,34 @@ function tick(time){
 			textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),13*32+10+(7*4)*Game.dialog.message.indexOf(message));
 		}
 		
-		if(Game.currentInterest && Game.currentInterest.unit.isLootable() && !Game.currentInterest.unit.searched){
-			overlayCtx.fillStyle = "#21262b"
-			overlayCtx.fillRect(2*32,16*32+8,6*32,32+16)
-			overlayCtx.fillStyle = "#e0f0f0"
-			overlayCtx.fillRect(2*32+4,16*32+8+4,6*32-8,32+16-8)
-			textPainter.drawText("(X) IGNORE",overlayCtx,2*32+16,16*32+18);
-		
-			overlayCtx.fillStyle = "#21262b"
-			overlayCtx.fillRect(13*32,16*32+8,6*32,32+16)
-			overlayCtx.fillStyle = "#e0f0f0"
-			overlayCtx.fillRect(13*32+4,16*32+8+4,6*32-8,32+16-8)
-			textPainter.drawText("(C) SEARCH",overlayCtx,13*32+16,16*32+18);
+		if(!Game.search.isSearching()){
+			if(Game.currentInterest && (Game.currentInterest.unit.isLootable() || Game.currentInterest.unit.canBeDiggedUp()) && !Game.currentInterest.unit.searched){
+				overlayCtx.fillStyle = "#21262b"
+				overlayCtx.fillRect(2*32,16*32+8,6*32,32+16)
+				overlayCtx.fillStyle = "#e0f0f0"
+				overlayCtx.fillRect(2*32+4,16*32+8+4,6*32-8,32+16-8)
+				textPainter.drawText("(X) IGNORE",overlayCtx,2*32+16,16*32+18);
+			
+				overlayCtx.fillStyle = "#21262b"
+				overlayCtx.fillRect(13*32,16*32+8,6*32,32+16)
+				overlayCtx.fillStyle = "#e0f0f0"
+				overlayCtx.fillRect(13*32+4,16*32+8+4,6*32-8,32+16-8)
+				if(Game.currentInterest.unit.isLootable()){
+					textPainter.drawText("(C) SEARCH",overlayCtx,13*32+16,16*32+18);
+				}else{
+					textPainter.drawText("(C) DIG UP",overlayCtx,13*32+16,16*32+18);
+				}
+			}
 		}
+	}
+	
+	if(Game.currentInterest && Game.currentInterest.unit.canBePickedUp() && !Game.search.isSearching()){
+		var size = Math.ceil(Game.currentInterest.unit.name.length/1.5);
+		overlayCtx.fillStyle = "#21262b"
+		overlayCtx.fillRect((8-Math.floor(size/2))*32,12*32,6*32+size*32,32+16)
+		overlayCtx.fillStyle = "#e0f0f0"
+		overlayCtx.fillRect((8-Math.floor(size/2))*32+4,12*32+4,6*32-8+size*32,32+16-8)
+		textPainter.drawText("(C) PICK UP "+Game.currentInterest.unit.name,overlayCtx,(8-Math.floor(size/2))*32+16,12*32+10);
 	}
 	
 	ctx.drawImage(mapCanvas,0,0)
