@@ -109,7 +109,7 @@ DIRECTION.turn = function(direction, delta){
 };
 
 var lakeTiles = [9,100,110,120,130,140,150,160,170,180,190,200,210,10,11,12,13,14,15,16,17,18,19,20,21,22]
-var snowStorm = 8+w(21);
+var snowStorm = 1.3;
 function MapDrawer(ctx, map, stepManager){
 
 	this.xShift = 0;
@@ -340,19 +340,6 @@ function MapDrawer(ctx, map, stepManager){
 			}
 		}	
 
-		for(var ys=-16; ys<12; ys++){
-			for(var xs=-16; xs<12; xs++){
-				var field = map.get(Game.player.position.x+xs,Game.player.position.y+ys)									
-				var x = 10+xs
-				var y = 10+ys		
-				X=types.ground.x*8;
-				Y=types.ground.y*8;
-				ctx.globalAlpha = 1-(snowStorm-Math.min(snowStorm,Math.abs(xs)+Math.abs(ys)))/snowStorm
-				ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)					
-			}
-		}
-		ctx.globalAlpha = 1
-		
 		if(map.get(Game.player.position.x,Game.player.position.y).type != 7){
 			X=types.guy.x*8;
 			Y=types.guy.y*8;
@@ -472,7 +459,7 @@ var Game = {
 	},		
 	findSomething : function(unit){
 		if(unit.inventory.length == 0){
-			Game.setMessage(["THERE'S NOTHING I COULD USE."])
+			Game.setMessage(new Message("THERE'S NOTHING I COULD USE."))
 		}
 		unit.searched = true;
 	},
@@ -486,7 +473,7 @@ var Game = {
 	},
 	setMessageByField : function(field){					
 		Game.currentInterest = null;
-		if(field.unit.message || field.unit.canBePickedUp()){			
+		if(field.unit.message){			
 			Game.currentInterest = field;
 			Game.dialog.message = field.unit.message;
 		}
@@ -569,32 +556,10 @@ function TextPainter(){
 	}
 }
 
-var texts = {
-	'ruin' : [
-		"THIS PLACE IS COLLAPSED.",
-		"THE REMNANTS OF A HOUSE.\nLOOKS LIKE IT COLLAPSED LONG AGO.",
-		"ONCE, THIS WAS THE HOME OF SOMEBODY.\nNOW THIS PLACE IS A RUIN."
-	],	
-	'house' : [
-		"SHELTER! FINALLY!\nBUT THE DOOR IS LOCKED.",
-		"THIS ONE'S STILL STANDING.\nLET'S HAVE A LOOK INSIDE.",
-		"A SAFE PLACE TO HIDE\nFROM THE WIND?"
-	],
-	'fisher_hut' : [
-		"AN OLD AND ABANDONED FISHING HUT.\nAT LEAST SOME TYPE OF SHELTER.",
-		"A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE."
-	]
-}
-
-function splitChoose(arr){
-	var msg = arr.rnd()
-	return msg?msg.split('\n'):null;
-}
-
 function Unit(type,subType,messages, lootable, minSearchTime, maxSearchTime){
 	this.type = type;
 	this.subType = subType;
-	this.message = splitChoose(messages);
+	this.message = messages.rnd()
 	this.inventory = [];
 	this.isLootable = function(){
 		return lootable || false;
@@ -604,11 +569,11 @@ function Unit(type,subType,messages, lootable, minSearchTime, maxSearchTime){
 	this.searchTime = minSearchTime + w(maxSearchTime-minSearchTime) + 1;
 }
 
-function UnitPickupItem(name,subType,messages){
+function UnitPickupItem(name,subType,message){
 	this.name = name;
 	this.type = 'item';
 	this.subType = subType;
-	this.message = splitChoose(messages);
+	this.message = message;
 	this.inventory = [name];
 	this.isLootable = function(){return false;}
 	this.canBePickedUp = function(){return true};
@@ -616,7 +581,7 @@ function UnitPickupItem(name,subType,messages){
 	this.searchTime = 0;
 }
 
-function UnitDigUpItem(subType,messages, minSearchTime, maxSearchTime,loot){
+function UnitDigUpItem(subType, messages, minSearchTime, maxSearchTime,loot){
 
 	var sum = 0;
 	for(var i=0; i<loot.length; i++){
@@ -633,7 +598,7 @@ function UnitDigUpItem(subType,messages, minSearchTime, maxSearchTime,loot){
 
 	this.type = 'item';
 	this.subType = subType;
-	this.message = splitChoose(messages);
+	this.message = new Message(messages.rnd(),new Option('C','DIG UP'));
 	this.inventory = [name];	
 	this.isLootable = function(){return false;}
 	this.canBePickedUp = function(){return false};
@@ -649,40 +614,38 @@ var Units = {
 		if(!Units[type]) Units[type] = {}
 		if(!Units[type][subType]) Units[type][subType] = function() { return new Unit(type,subType,messages,lootable,minSearchTime,maxSearchTime)};
 	},
-	addPickupItem : function(name,subType,messages){
+	addPickupItem : function(name,subType,key,text){
 		if(!Units['item']) Units['item'] = {}
-		if(!Units['item'][subType]) Units['item'][subType] = function() { return new UnitPickupItem(name,subType,messages)};
+		if(!Units['item'][subType]) Units['item'][subType] = function() { return new UnitPickupItem(name,subType,new Message(null,new Option(key,text)))};
 	},
 	addDigUpItem : function(subType,messages,minSearchTime,maxSearchTime,loot){
 		if(!Units['item']) Units['item'] = {}
 		if(!Units['item'][subType]) Units['item'][subType] = function() { return new UnitDigUpItem(subType,messages,minSearchTime,maxSearchTime,loot)};
 	}
 }
-Units.add('corpse','elder_man'		,["THE FROZEN CORPSE OF AN ELDER MAN.\nWHAT A MESS!"], true,3,10);
-Units.add('corpse','elder_women'	,["THE DEAD BODY OF AN ELDER WOMAN.\nI WONDER WHAT HAPPENED TO HER."], true,3,10);
-Units.add('corpse','women'			,["SHE'S DEAD.\nWHAT WAS SHE DOING OUT HERE?"], true,3,10);
-Units.add('corpse','man'			,["THIS MAN IS DEAD. HE IS FROZEN.\nI CAN'T SEE ANY WOUNDS."], true,3,10);
+Units.add('corpse','elder_man'		,[new Message("THE FROZEN CORPSE OF AN ELDER MAN.\nWHAT A MESS!",new Option('C','SEARCH'))], true,3,10);
+Units.add('corpse','elder_women'	,[new Message("THE DEAD BODY OF AN ELDER WOMAN.\nI WONDER WHAT HAPPENED TO HER.",new Option('C','SEARCH'))], true,3,10);
+Units.add('corpse','women'			,[new Message("SHE'S DEAD.\nWHAT WAS SHE DOING OUT HERE?",new Option('C','SEARCH'))], true,3,10);
+Units.add('corpse','man'			,[new Message("THIS MAN IS DEAD. HE IS FROZEN.\nI CAN'T SEE ANY WOUNDS.",new Option('C','SEARCH'))], true,3,10);
 Units.add('building' ,'house',[
-		"SHELTER! FINALLY!\nBUT THE DOOR IS LOCKED.",
-		"THIS ONE'S STILL STANDING.\nLET'S HAVE A LOOK INSIDE.",
-		"A SAFE PLACE TO HIDE\nFROM THE WIND?"
+		new Message("SHELTER! FINALLY!\nBUT THE DOOR IS LOCKED."),
+		new Message("THIS ONE'S STILL STANDING.\nLET'S HAVE A LOOK INSIDE."),
+		new Message("A SAFE PLACE TO HIDE\nFROM THE WIND?")
 	]);
 Units.add('building' ,'ruin',[
-		"THIS PLACE IS COLLAPSED.",
-		"THE REMNANTS OF A HOUSE.\nLOOKS LIKE IT COLLAPSED LONG AGO.",
-		"ONCE, THIS WAS THE HOME OF SOMEBODY.\nNOW THIS PLACE IS A RUIN."
+		new Message("THIS PLACE IS COLLAPSED."),
+		new Message("THE REMNANTS OF A HOUSE.\nLOOKS LIKE IT COLLAPSED LONG AGO."),
+		new Message("ONCE, THIS WAS THE HOME OF SOMEBODY.\nNOW THIS PLACE IS A RUIN.")
 	]);
 Units.add('building' ,'fisher_hut',[
-		"AN OLD AND ABANDONED FISHING HUT.\nAT LEAST SOME TYPE OF SHELTER.",
-		"A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE."
+		new Message("AN OLD AND ABANDONED FISHING HUT.\nAT LEAST SOME TYPE OF SHELTER."),
+		new Message("A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE.")
 	]);
-Units.add('building' ,'fisher_hut_roof',[
-		"AN OLD AND ABANDONED FISHING HUT.\nAT LEAST SOME TYPE OF SHELTER.",
-		"A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE."
-	]);		
+// roof gets same message as body programatically
+Units.add('building' ,'fisher_hut_roof',[]);		
 Units.EMPTY = new Unit('empty','empty',[])
 Units.STONE = new Unit('landscape','stone',[])
-Units.addPickupItem('SMALL BRANCH','twig',[]);//['A SMALL BRANCH',"HERE'S A SMALL BRANCH","A SMALL BRANCH. COULD BE HELPFULL\nSTARTING A FIRE."]);
+Units.addPickupItem('SMALL BRANCH','twig','C','PICK UP SMALL BRANCH');
 Units.addDigUpItem('unknownInTheSnow',['THERE IS SOMETHING BENEATH THE SNOW.'],3,6,[
 	new Diggable(Units.item.twig,2,3,10),
 	new Diggable(Units.corpse.elder_man,4,6,1),
@@ -704,7 +667,25 @@ function releaseKey(keyCode){
 	keysDown[keyCode] = false;
 }
 
-var textPainter, overlayCtx;
+function updateShader(){
+	shaderCtx.clearRect(0,0,WIDTH,HEIGHT)
+	for(var y=0; y<HEIGHT; y++){
+		for(var x=0; x<HEIGHT; x++){	
+			var alpha = Math.min(Math.sqrt(Math.pow(WIDTH/2,2)+Math.pow(HEIGHT/2,2))/snowStorm,Math.sqrt(Math.pow(x-WIDTH/2,2)+Math.pow(y-HEIGHT/2,2)))/(Math.sqrt(Math.pow(WIDTH/2,2)+Math.pow(HEIGHT/2,2))/snowStorm)
+			shaderCtx.fillStyle="rgba(255,255,255,"+alpha+")"
+			shaderCtx.fillRect(x,y,1,1)
+		}
+	}	
+}
+
+function makePixelPerfect(ctx){
+	ctx.mozImageSmoothingEnabled = false;
+	ctx.webkitImageSmoothingEnabled = false;
+	ctx.msImageSmoothingEnabled = false;
+	ctx.imageSmoothingEnabled = false;
+}
+
+var textPainter, overlayCtx, shaderCtx, shaderCanvas,crissleCtx,crissleCanvas;
 function start(){
 	
 	sprites = img('sprites.png')
@@ -763,27 +744,37 @@ function start(){
 
 	textPainter = new TextPainter();
 	
+	crissleCanvas = createCanvas(WIDTH,HEIGHT,null,"crissleCanvas")
+	shaderCanvas = createCanvas(WIDTH,HEIGHT,null,"shaderCanvas")
 	overlayCanvas = createCanvas(WIDTH,HEIGHT,null,"overlayCanvas")
 	gameCanvas = createCanvas(WIDTH,HEIGHT,MouseListener,"gameCanvas")
 	mapCanvas = createCanvas(WIDTH,HEIGHT,null,"mapCanvas")
 	
 	mapCtx = mapCanvas.getContext('2d')
 	overlayCtx = overlayCanvas.getContext('2d')
+	shaderCtx = shaderCanvas.getContext('2d')
+	crissleCtx = crissleCanvas.getContext('2d')
 	
 	ctx = gameCanvas.getContext("2d");
 	
-	overlayCtx.mozImageSmoothingEnabled = false;
-	overlayCtx.webkitImageSmoothingEnabled = false;
-	overlayCtx.msImageSmoothingEnabled = false;
-	overlayCtx.imageSmoothingEnabled = false;
+	makePixelPerfect(overlayCtx)
+	makePixelPerfect(mapCtx)
+	makePixelPerfect(crissleCtx)
+	makePixelPerfect(shaderCtx)
 	
-	mapCtx.mozImageSmoothingEnabled = false;
-	mapCtx.webkitImageSmoothingEnabled = false;
-	mapCtx.msImageSmoothingEnabled = false;
-	mapCtx.imageSmoothingEnabled = false;
+	var effectSize = 4;
+	for(var y=0; y<HEIGHT; y+=effectSize){
+		for(var x=0; x<HEIGHT; x+=effectSize){	
+			var r = w(256)
+			crissleCtx.fillStyle="rgb("+r+","+r+","+r+")"
+			crissleCtx.fillRect(x,y,effectSize,effectSize)
+		}
+	}	
 	
 	ctx.filllStyle = "black"
 	ctx.fillRect(0,0,WIDTH,HEIGHT)
+	
+	updateShader()
 	
 	document.body.appendChild(gameCanvas)
 	document.onkeydown = function(evt){
@@ -812,7 +803,15 @@ function start(){
 					// PICK UP current interest
 					Game.currentInterest.unit = Units.EMPTY;
 					if(!w(3)) {
-						Game.setMessage([['GOT IT!'],['THAT WILL BE USEFUL'],['MIGHT BE USEFUL'],["THAT'LL COME IN HANDY."],['I CAN USE THAT'],['OKAY.'],['GOOD.']].rnd())
+						Game.setMessage([	
+							new Message('GOT IT!'),
+							new Message('THAT WILL BE USEFUL'),
+							new Message('MIGHT BE USEFUL'),
+							new Message("THAT'LL COME IN HANDY."),
+							new Message('I CAN USE THAT'),
+							new Message('OKAY.'),
+							new Message('GOOD.')
+						].rnd())
 					}else{
 						Game.dialog.reset()
 					}				
@@ -837,19 +836,17 @@ function start(){
 				Game.dialog.reset();
 			}else{
 				var messages = [					
-					"HUNGRY, THIRSTY, COLD.\nBUT I'M STILL ALIVE.",					
-					"_",
-					"I WILL SURVIVE THAT DAY.\nAND THE NEXT ONE _ I MUST!",
-					"ONE STEP, THEN THE NEXT.\nTHEN THE NEXT _",
+					new Message("AM I THE LAST ONE ALIVE?\nNO _ THAT CAN'T BE _"),					
+					new Message("THERE MUST BE SOME SHELTER.\nSOMEWHERE."),					
+					new Message("HUNGRY, THIRSTY, COLD _ ALIVE."),					
+					new Message("_"),
+					new Message("I WILL SURVIVE THAT DAY.\nAND THE NEXT ONE _ I MUST!"),
+					new Message("ONE STEP, THEN THE NEXT.\nTHEN THE NEXT _")
 				]
-				if(snowStorm >= 20){
-					messages.push("THE WIND IS MODERATE,\nBUT STILL FREEZING.")
-					messages.push("IT WILL GET COLDER SOON.")
-				}else {
-					messages.push("THAT WIND IS GETTING STRONGER.\nI SHOULD FIND SOME SHELTER SOON.")			
-					messages.push("_ SO FREEZING COLD _")
-					messages.push("IF ONLY THAT WIND WOULD DROP!")
-				}
+				
+				messages.push(new Message("THAT WIND IS GETTING STRONGER.\nI SHOULD FIND SOME SHELTER SOON."))			
+				messages.push(new Message("_ SO FREEZING COLD _"))
+				messages.push(new Message("IF ONLY THAT WIND WOULD DROP!"))			
 				
 				var houseNear = false;
 				for(var ys=-8; ys<9 && !houseNear; ys++){
@@ -861,20 +858,20 @@ function start(){
 					}
 				}
 				if(houseNear){
-					messages.push("I SHOULD GO INSIDE.")
-					messages.push("THERE MIGHT BE SOME SUPPLIES LEFT\nIN THERE.")
+					messages.push(new Message("I SHOULD GO INSIDE."))
+					messages.push(new Message("THERE MIGHT BE SOME SUPPLIES LEFT\nIN THERE."))
 				}
-				Game.dialog.message = messages.rnd().split('\n')
+				Game.dialog.message = messages.rnd()
 			}
 		}
 		
 		if(arrayContains(code,[37,38,39,40]) && moved){
 			var r = w(10);
 			if(r==0) {
-				snowStorm = Math.min(40, snowStorm+1)				
+				snowStorm = Math.min(1.3, snowStorm+0.1)				
 			}
 			if(r==1) {
-				snowStorm = Math.max(5, snowStorm-1)				
+				snowStorm = Math.max(5, snowStorm-0.1)				
 			}
 		}		
 	}
@@ -1042,7 +1039,7 @@ function start(){
 	}		
 	
 	// items
-	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.006); i++){
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.005); i++){
 		var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT))
 		if(field.type != 0) continue;
 		
@@ -1088,12 +1085,40 @@ var KeyCode = {
 	X : 88,	
 }
 
+function Option(key,text,action){
+	this.action = action;
+	this.getText = function(){
+		return "("+key+") "+text;
+	}
+	this.action = action;
+}
+
+function Message(text,option){
+	this.text = text ? text.split('\n') : [];
+	this.option = option;
+	this.getLines = function() {
+		return this.text;
+	}
+	this.hasText = function() {
+		return text && text.replace('\n','').replace(' ','').length > 0;
+	}
+	this.hasOption = function(){
+		return option ? true : false;
+	}
+	this.hasSingleOption = function(){
+		return !text && option;
+	}
+	this.hasDoubleOption = function(){
+		return text && option;
+	}
+}
+
 var men = [];
 var lastTime = 0;
 var stepTime = 50;
 var lastAnimationTime = 0;
 var animationStepTime = 250;
-function tick(time){
+function tick(time){	
 	Game.time = time;
 	if(time-lastTime > stepTime){
 		lastTime = time;			
@@ -1124,12 +1149,13 @@ function tick(time){
 			direction = p(1,1)				
 		}
 		
+		if(Game.dialog.message){
+			Game.dialog.reset();				
+		}	
+		Game.setMessageByField(map.get(Game.player.position.x+direction.x,Game.player.position.y+direction.y));			
+		
+		
 		if(!Game.isPassable(Game.player.position.x+direction.x,Game.player.position.y+direction.y)){
-			if(Game.dialog.message){
-				Game.dialog.reset();				
-			}	
-			Game.setMessageByField(map.get(Game.player.position.x+direction.x,Game.player.position.y+direction.y));			
-			
 			if(Game.isPassable(Game.player.position.x,Game.player.position.y+direction.y)){
 				direction.x = 0
 			}else{
@@ -1140,12 +1166,6 @@ function tick(time){
 		if(Game.isPassable(Game.player.position.x+direction.x,Game.player.position.y+direction.y)){
 			map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
 			Game.player.startMoving(direction)
-			Game.dialog.reset();				
-		}else {		
-			if(Game.dialog.message){
-				Game.dialog.reset();				
-			}	
-			Game.setMessageByField(map.get(Game.player.position.x+direction.x,Game.player.position.y+direction.y));			
 		}
 	} else if(!Game.player.moving){
 		if(keysDown[KeyCode.LEFT] && !Game.player.moving){		
@@ -1218,54 +1238,57 @@ function tick(time){
 	Game.search.update(time)
 	if(Game.search.isSearching()){	
 		var n = Game.search.searchTime - Game.search.searchTimeToDo + 1 	
-		Game.setMessage([Game.search.message,"",""," ".repeat(Math.floor(Game.search.searchTime/3))+"["+"I".repeat(n)+".".repeat(Game.search.searchTimeToDo-1)+"]"],true)		
+		Game.setMessage(new Message(Game.search.message+"\n\n\n"+" ".repeat(Math.floor(Game.search.searchTime/3))+"["+"I".repeat(n)+".".repeat(Game.search.searchTimeToDo-1)+"]"),true)		
 	}
 		
-	if(Game.dialog.message){			
+	if(Game.dialog.message){	
 
-		overlayCtx.fillStyle = "#21262b"
-		overlayCtx.fillRect(0,13*32-5-1*4,WIDTH,100)
-		overlayCtx.fillStyle = "#e0f0f0"
-		overlayCtx.fillRect(0,13*32-5,WIDTH,100- 2*4)
-	
-		overlayCtx.drawImage(sprites,types.speak.x*8,types.speak.y*8,8,8,10*32,12*32-1*5,32,32)
-		for(var message of Game.dialog.message){
-			textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),13*32+10+(7*4)*Game.dialog.message.indexOf(message));
-		}
+		if(Game.dialog.message.hasText()){
+			overlayCtx.fillStyle = "#21262b"
+			overlayCtx.fillRect(0,13*32-5-1*4,WIDTH,100)
+			overlayCtx.fillStyle = "#e0f0f0"
+			overlayCtx.fillRect(0,13*32-5,WIDTH,100- 2*4)
 		
-		if(!Game.search.isSearching()){
-			if(Game.currentInterest && (Game.currentInterest.unit.isLootable() || Game.currentInterest.unit.canBeDiggedUp()) && !Game.currentInterest.unit.searched){
-				overlayCtx.fillStyle = "#21262b"
-				overlayCtx.fillRect(2*32,16*32+8,6*32,32+16)
-				overlayCtx.fillStyle = "#e0f0f0"
-				overlayCtx.fillRect(2*32+4,16*32+8+4,6*32-8,32+16-8)
-				textPainter.drawText("(X) IGNORE",overlayCtx,2*32+16,16*32+18);
-			
-				overlayCtx.fillStyle = "#21262b"
-				overlayCtx.fillRect(13*32,16*32+8,6*32,32+16)
-				overlayCtx.fillStyle = "#e0f0f0"
-				overlayCtx.fillRect(13*32+4,16*32+8+4,6*32-8,32+16-8)
-				if(Game.currentInterest.unit.isLootable()){
-					textPainter.drawText("(C) SEARCH",overlayCtx,13*32+16,16*32+18);
-				}else{
-					textPainter.drawText("(C) DIG UP",overlayCtx,13*32+16,16*32+18);
-				}
+			overlayCtx.drawImage(sprites,types.speak.x*8,types.speak.y*8,8,8,10*32,12*32-1*5,32,32)
+			var textLines = Game.dialog.message.getLines();
+			for(var i=0; i<textLines.length;i++){
+				var message = textLines[i]
+				textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),13*32+10+(7*4)*i);
 			}
 		}
-	}
-	
-	if(Game.currentInterest && Game.currentInterest.unit.canBePickedUp() && !Game.search.isSearching()){
-		var size = Math.ceil(Game.currentInterest.unit.name.length/1.5);
-		overlayCtx.fillStyle = "#21262b"
-		overlayCtx.fillRect((8-Math.floor(size/2))*32,12*32,6*32+size*32,32+16)
-		overlayCtx.fillStyle = "#e0f0f0"
-		overlayCtx.fillRect((8-Math.floor(size/2))*32+4,12*32+4,6*32-8+size*32,32+16-8)
-		textPainter.drawText("(C) PICK UP "+Game.currentInterest.unit.name,overlayCtx,(8-Math.floor(size/2))*32+16,12*32+10);
+		
+		if(Game.dialog.message.hasDoubleOption()){					
+			overlayCtx.fillStyle = "#21262b"
+			overlayCtx.fillRect(2*32,16*32+8,6*32,32+16)
+			overlayCtx.fillStyle = "#e0f0f0"
+			overlayCtx.fillRect(2*32+4,16*32+8+4,6*32-8,32+16-8)
+			textPainter.drawText("(X) IGNORE",overlayCtx,2*32+16,16*32+18);
+		
+			overlayCtx.fillStyle = "#21262b"
+			overlayCtx.fillRect(13*32,16*32+8,6*32,32+16)
+			overlayCtx.fillStyle = "#e0f0f0"
+			overlayCtx.fillRect(13*32+4,16*32+8+4,6*32-8,32+16-8)
+			
+			textPainter.drawText(Game.dialog.message.option.getText(),overlayCtx,13*32+16,16*32+18);		
+		}else if(Game.dialog.message.hasSingleOption()){
+			var size = Math.ceil(Game.currentInterest.unit.name.length/1.5);
+			overlayCtx.fillStyle = "#21262b"
+			overlayCtx.fillRect((8-Math.floor(size/2))*32,12*32,6*32+size*32,32+16)
+			overlayCtx.fillStyle = "#e0f0f0"
+			overlayCtx.fillRect((8-Math.floor(size/2))*32+4,12*32+4,6*32-8+size*32,32+16-8)
+			textPainter.drawText(Game.dialog.message.option.getText(),overlayCtx,(8-Math.floor(size/2))*32+16,12*32+10);	
+		}
 	}
 	
 	ctx.drawImage(mapCanvas,0,0)
+	ctx.globalAlpha = 0.05;	
+	ctx.drawImage(crissleCanvas,0,0)
+	ctx.globalAlpha = 1;	
+	ctx.drawImage(shaderCanvas,0,0)	
+	ctx.globalAlpha = 0.9;	
 	ctx.drawImage(overlayCanvas,0,0)
-
+	ctx.globalAlpha = 1;	
+	
 	window.requestAnimationFrame(tick)
 }
 
@@ -1283,9 +1306,9 @@ canvas {
 }
 </style>
 </head>
-<body onload="start()" style="background-color:black">
-<pre style="color:white">
-arrow keys --- move character
+<body onload="start()" style="text-align:center;background-color:white">
+<pre style="color:black">
+arrow keys ------- move character
 x ------------ talk / cancel talk
 </pre>
 </body></html>
