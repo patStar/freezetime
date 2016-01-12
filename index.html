@@ -1125,6 +1125,11 @@ function tick(time){
 		}
 		
 		if(!Game.isPassable(Game.player.position.x+direction.x,Game.player.position.y+direction.y)){
+			if(Game.dialog.message){
+				Game.dialog.reset();				
+			}	
+			Game.setMessageByField(map.get(Game.player.position.x+direction.x,Game.player.position.y+direction.y));			
+			
 			if(Game.isPassable(Game.player.position.x,Game.player.position.y+direction.y)){
 				direction.x = 0
 			}else{
@@ -1132,14 +1137,14 @@ function tick(time){
 			}
 		}
 		
-		
 		if(Game.isPassable(Game.player.position.x+direction.x,Game.player.position.y+direction.y)){
 			map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
 			Game.player.startMoving(direction)
 			Game.dialog.reset();				
-		}else if(Game.dialog.message){
-			Game.dialog.reset();				
-		}else {
+		}else {		
+			if(Game.dialog.message){
+				Game.dialog.reset();				
+			}	
 			Game.setMessageByField(map.get(Game.player.position.x+direction.x,Game.player.position.y+direction.y));			
 		}
 	} else if(!Game.player.moving){
