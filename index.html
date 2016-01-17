@@ -56,7 +56,9 @@ function createCanvas(width ,height, mouseListener, id)
 	return canvas;
 }
 
-function MapField(type){
+function MapField(type,x,y){
+	this.x = x;
+	this.y = y;
 	this.type = type	
 	this.unit = Units.EMPTY
 }
@@ -66,17 +68,22 @@ function Map(width,height){
 	for(var y=0; y<height; y++){
 		map.push([]);
 		for(var x=0; x<width; x++){
-			map[y].push(new MapField(0));
+			map[y].push(new MapField(0,x,y));
 		}
 	}
 	
+	this.getTopField = function(direction, x, y){
+		var direction = DIRECTION.N
+		return this.get(x+rightDirection.x,y+rightDirection.y)
+	}
+	
 	this.getRightField = function(direction, x, y){
-		var rightDirection = DIRECTION.turnRight(direction);
+		var rightDirection = DIRECTION.turnRight(direction || DIRECTION.N);
 		return this.get(x+rightDirection.x,y+rightDirection.y)
 	}
 	
 	this.getLeftField = function(direction, x, y){
-		var rightDirection = DIRECTION.turnLeft(direction);
+		var rightDirection = DIRECTION.turnLeft(direction || DIRECTION.N);
 		return this.get(x+rightDirection.x,y+rightDirection.y)	
 	}
 		
@@ -95,9 +102,13 @@ function Map(width,height){
 
 var DIRECTION = new Object();
 DIRECTION.N = p(0,-1);
+DIRECTION.NE = p(1,-1);
+DIRECTION.NW = p(-1,-1);
 DIRECTION.E = p(1,0);
 DIRECTION.W = p(-1,0);
 DIRECTION.S = p(0,1);	
+DIRECTION.SE = p(1,1);
+DIRECTION.SW = p(-1,1);
 DIRECTION.order = [DIRECTION.N,DIRECTION.E,DIRECTION.S,DIRECTION.W];
 DIRECTION.turnAround = function(direction) {return DIRECTION.turn(direction,2)}
 DIRECTION.turnLeft = function(direction) {return DIRECTION.turn(direction,-1)}
@@ -109,7 +120,6 @@ DIRECTION.turn = function(direction, delta){
 };
 
 var lakeTiles = [9,100,110,120,130,140,150,160,170,180,190,200,210,10,11,12,13,14,15,16,17,18,19,20,21,22]
-var snowStorm = 1.3;
 function MapDrawer(ctx, map, stepManager){
 
 	this.xShift = 0;
@@ -144,142 +154,142 @@ function MapDrawer(ctx, map, stepManager){
 				var y = 10+ys				
 				var X,Y;
 				if(field.type == 0){
-					X=types.ground.x*8;
-					Y=types.ground.y*8;
+					X=Type.ground.x*8;
+					Y=Type.ground.y*8;
 				}else if(field.type == 2){
-					X=types.tree1.x*8;
-					Y=types.tree1.y*8;
+					X=Type.tree1.x*8;
+					Y=Type.tree1.y*8;
 				}else if(field.type == 3){
-					X=types.tree2.x*8;
-					Y=types.tree2.y*8;
+					X=Type.tree2.x*8;
+					Y=Type.tree2.y*8;
 				}else if(field.type == 4){
-					X=types.tree3.x*8;
-					Y=types.tree3.y*8;
+					X=Type.tree3.x*8;
+					Y=Type.tree3.y*8;
 				}else if(field.type == 5){
-					X=types.tree4.x*8;
-					Y=types.tree4.y*8;
+					X=Type.tree4.x*8;
+					Y=Type.tree4.y*8;
 				}else if(field.type == 6){
-					X=types.grass.x*8;
-					Y=types.grass.y*8;
+					X=Type.grass.x*8;
+					Y=Type.grass.y*8;
 				}else if(field.type == 7){
-					X=types.house.x*8;
-					Y=types.house.y*8;
+					X=Type.house.x*8;
+					Y=Type.house.y*8;
 				}else if(field.type == 8){
-					X=types.hole.x*8;
-					Y=types.hole.y*8;
+					X=Type.hole.x*8;
+					Y=Type.hole.y*8;
 				}else if(field.type == 9){
-					X=types.see.x*8;
-					Y=types.see.y*8;
+					X=Type.see.x*8;
+					Y=Type.see.y*8;
 				}else if(field.type == 10){
-					X=types.see_n_w.x*8;
-					Y=types.see_n_w.y*8;
+					X=Type.see_n_w.x*8;
+					Y=Type.see_n_w.y*8;
 				}else if(field.type == 11){
-					X=types.see_n_e.x*8;
-					Y=types.see_n_e.y*8;
+					X=Type.see_n_e.x*8;
+					Y=Type.see_n_e.y*8;
 				}else if(field.type == 12){
-					X=types.see_s_w.x*8;
-					Y=types.see_s_w.y*8;
+					X=Type.see_s_w.x*8;
+					Y=Type.see_s_w.y*8;
 				}else if(field.type == 13){
-					X=types.see_s_e.x*8;
-					Y=types.see_s_e.y*8;
+					X=Type.see_s_e.x*8;
+					Y=Type.see_s_e.y*8;
 				}else if(field.type == 14){
-					X=types.see_w.x*8;
-					Y=types.see_w.y*8;
+					X=Type.see_w.x*8;
+					Y=Type.see_w.y*8;
 				}else if(field.type == 15){
-					X=types.see_e.x*8;
-					Y=types.see_e.y*8;
+					X=Type.see_e.x*8;
+					Y=Type.see_e.y*8;
 				}else if(field.type == 16){
-					X=types.see_e_x.x*8;
-					Y=types.see_e_x.y*8;
+					X=Type.see_e_x.x*8;
+					Y=Type.see_e_x.y*8;
 				}else if(field.type == 17){
-					X=types.see_w_x.x*8;
-					Y=types.see_w_x.y*8;
+					X=Type.see_w_x.x*8;
+					Y=Type.see_w_x.y*8;
 				}else if(field.type == 18){
-					X=types.see_n_x.x*8;
-					Y=types.see_n_x.y*8;
+					X=Type.see_n_x.x*8;
+					Y=Type.see_n_x.y*8;
 				}else if(field.type == 19){
-					X=types.see_s_x.x*8;
-					Y=types.see_s_x.y*8;
+					X=Type.see_s_x.x*8;
+					Y=Type.see_s_x.y*8;
 				}else if(field.type == 20){
-					X=types.see_sn_x.x*8;
-					Y=types.see_sn_x.y*8;
+					X=Type.see_sn_x.x*8;
+					Y=Type.see_sn_x.y*8;
 				}else if(field.type == 21){
-					X=types.see_we_x.x*8;
-					Y=types.see_we_x.y*8;
+					X=Type.see_we_x.x*8;
+					Y=Type.see_we_x.y*8;
 				}else if(field.type == 22){
-					X=types.single_lake.x*8;
-					Y=types.single_lake.y*8;
+					X=Type.single_lake.x*8;
+					Y=Type.single_lake.y*8;
 				}else if(field.type == 30){
-					X=types.ground_2.x*8;
-					Y=types.ground_2.y*8;
+					X=Type.ground_2.x*8;
+					Y=Type.ground_2.y*8;
 				}else if(field.type == 31){
-					X=types.ground_3.x*8;
-					Y=types.ground_3.y*8;
+					X=Type.ground_3.x*8;
+					Y=Type.ground_3.y*8;
 				}else if(field.type == 32){
-					X=types.ground_4.x*8;
-					Y=types.ground_4.y*8;
+					X=Type.ground_4.x*8;
+					Y=Type.ground_4.y*8;
 				}else if(field.type == 40){
-					X=types.ruin.x*8;
-					Y=types.ruin.y*8;
+					X=Type.ruin.x*8;
+					Y=Type.ruin.y*8;
 				}
 				else if(field.type == 61){
-					X=types.grass_2.x*8;
-					Y=types.grass_2.y*8;
+					X=Type.grass_2.x*8;
+					Y=Type.grass_2.y*8;
 				}else if(field.type == 62){
-					X=types.grass_3.x*8;
-					Y=types.grass_3.y*8;
+					X=Type.grass_3.x*8;
+					Y=Type.grass_3.y*8;
 				}else if(field.type == 63){
-					X=types.grass_4.x*8;
-					Y=types.grass_4.y*8;
+					X=Type.grass_4.x*8;
+					Y=Type.grass_4.y*8;
 				}else if(field.type == 64){
-					X=types.grass_5.x*8;
-					Y=types.grass_5.y*8;
+					X=Type.grass_5.x*8;
+					Y=Type.grass_5.y*8;
 				}
 				else if(field.type == 100){
-					X=types.see_n_w.x*8;
-					Y=(1+types.see_n_w.y)*8;
+					X=Type.see_n_w.x*8;
+					Y=(1+Type.see_n_w.y)*8;
 				}else if(field.type == 110){
-					X=types.see_n_e.x*8;
-					Y=(1+types.see_n_e.y)*8;
+					X=Type.see_n_e.x*8;
+					Y=(1+Type.see_n_e.y)*8;
 				}else if(field.type == 120){
-					X=types.see_s_w.x*8;
-					Y=(1+types.see_s_w.y)*8;
+					X=Type.see_s_w.x*8;
+					Y=(1+Type.see_s_w.y)*8;
 				}else if(field.type == 130){
-					X=types.see_s_e.x*8;
-					Y=(1+types.see_s_e.y)*8;
+					X=Type.see_s_e.x*8;
+					Y=(1+Type.see_s_e.y)*8;
 				}else if(field.type == 140){
-					X=types.see_w.x*8;
-					Y=(1+types.see_w.y)*8;
+					X=Type.see_w.x*8;
+					Y=(1+Type.see_w.y)*8;
 				}else if(field.type == 150){
-					X=types.see_e.x*8;
-					Y=(1+types.see_e.y)*8;;
+					X=Type.see_e.x*8;
+					Y=(1+Type.see_e.y)*8;;
 				}else if(field.type == 160){
-					X=types.see_e_x.x*8;
-					Y=(1+types.see_e_x.y)*8;
+					X=Type.see_e_x.x*8;
+					Y=(1+Type.see_e_x.y)*8;
 				}else if(field.type == 170){
-					X=types.see_w_x.x*8;
-					Y=(1+types.see_w_x.y)*8;
+					X=Type.see_w_x.x*8;
+					Y=(1+Type.see_w_x.y)*8;
 				}else if(field.type == 180){
-					X=types.see_n_x.x*8;
-					Y=(1+types.see_n_x.y)*8;
+					X=Type.see_n_x.x*8;
+					Y=(1+Type.see_n_x.y)*8;
 				}else if(field.type == 190){
-					X=types.see_s_x.x*8;
-					Y=(1+types.see_s_x.y)*8;
+					X=Type.see_s_x.x*8;
+					Y=(1+Type.see_s_x.y)*8;
 				}else if(field.type == 200){
-					X=types.see_sn_x.x*8;
-					Y=(1+types.see_sn_x.y)*8;
+					X=Type.see_sn_x.x*8;
+					Y=(1+Type.see_sn_x.y)*8;
 				}else if(field.type == 210){
-					X=types.see_we_x.x*8;
-					Y=(1+types.see_we_x.y)*8;
+					X=Type.see_we_x.x*8;
+					Y=(1+Type.see_we_x.y)*8;
 				}
 				
 				if(arrayContains(field.type,lakeTiles)){					
-					ctx.drawImage(sprites,types.see.x*8,types.see.y*8,8,8,32*x,32*y,32,32)																							
+					ctx.drawImage(sprites,Type.see.x*8,Type.see.y*8,8,8,32*x,32*y,32,32)																							
 					if(xs==0 && ys==1){					
 						if(Game.player.moving && (arrayContains(map.get(Game.player.position.x+xs,Game.player.position.y+ys-1).type,lakeTiles) || Game.player.movingDirection.y != -1) && (arrayContains(map.get(Game.player.position.x+xs-1,Game.player.position.y+ys).type,lakeTiles) || Game.player.movingDirection.x != -1) && (arrayContains(map.get(Game.player.position.x+xs+1,Game.player.position.y+ys).type,lakeTiles) || Game.player.movingDirection.x != 1)){				
-							ctx.drawImage(sprites,types.mirror_man.x*8,types.mirror_man.y*8,8,8,32*10-Game.player.mapShift.x,32*11-Game.player.mapShift.y,32,32)								
+							ctx.drawImage(sprites,Type.mirror_man.x*8,Type.mirror_man.y*8,8,8,32*10-Game.player.mapShift.x,32*11-Game.player.mapShift.y,32,32)								
 						}else{
-							ctx.drawImage(sprites,types.mirror_man.x*8,types.mirror_man.y*8,8,8,32*x,32*y,32,32)	
+							ctx.drawImage(sprites,Type.mirror_man.x*8,Type.mirror_man.y*8,8,8,32*x,32*y,32,32)	
 						}
 					}			
 				}
@@ -288,61 +298,63 @@ function MapDrawer(ctx, map, stepManager){
 					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)																		
 				}else if(field.type == 7){
 					if(field.houseLength == 3){
-						ctx.drawImage(sprites,types.hutStart.x*8,types.hutStart.y*8,8,8*2,32*x,32*y,32,32*2)																		
-						ctx.drawImage(sprites,(types.hutStart.x+3)*8,types.hutStart.y*8,8,8*2,32*(x+1),32*y,32,32*2)																							
-						ctx.drawImage(sprites,(types.hutStart.x+5)*8,types.hutStart.y*8,8,8*2,32*(x+2),32*y,32,32*2)																							
+						ctx.drawImage(sprites,Type.hutStart.x*8,Type.hutStart.y*8,8,8*2,32*x,32*y,32,32*2)																		
+						ctx.drawImage(sprites,(Type.hutStart.x+3)*8,Type.hutStart.y*8,8,8*2,32*(x+1),32*y,32,32*2)																							
+						ctx.drawImage(sprites,(Type.hutStart.x+5)*8,Type.hutStart.y*8,8,8*2,32*(x+2),32*y,32,32*2)																							
 					} else if(field.houseLength == 4){
-						ctx.drawImage(sprites,types.hutStart.x*8,types.hutStart.y*8,8,8*2,32*x,32*y,32,32*2)																		
-						ctx.drawImage(sprites,(types.hutStart.x+3)*8,types.hutStart.y*8,8*4,8*2,32*(x+1),32*y,32*4,32*2)																							
+						ctx.drawImage(sprites,Type.hutStart.x*8,Type.hutStart.y*8,8,8*2,32*x,32*y,32,32*2)																		
+						ctx.drawImage(sprites,(Type.hutStart.x+3)*8,Type.hutStart.y*8,8*4,8*2,32*(x+1),32*y,32*4,32*2)																							
 					} else if(field.houseLength == 5){
-						ctx.drawImage(sprites,types.hutStart.x*8,types.hutStart.y*8,8,8*2,32*x,32*y,32,32*2)																		
-						ctx.drawImage(sprites,(types.hutStart.x+2)*8,types.hutStart.y*8,8*4,8*2,32*(x+1),32*y,32*4,32*2)																		
+						ctx.drawImage(sprites,Type.hutStart.x*8,Type.hutStart.y*8,8,8*2,32*x,32*y,32,32*2)																		
+						ctx.drawImage(sprites,(Type.hutStart.x+2)*8,Type.hutStart.y*8,8*4,8*2,32*(x+1),32*y,32*4,32*2)																		
 					} else if(field.houseLength == 6){
-						ctx.drawImage(sprites,types.hutStart.x*8,types.hutStart.y*8,8*6,8*2,32*x,32*y,32*6,32*2)																		
+						ctx.drawImage(sprites,Type.hutStart.x*8,Type.hutStart.y*8,8*6,8*2,32*x,32*y,32*6,32*2)																		
 					}
 				}
 				
 				if(field.unit.subType == 'fisher_hut'){
-					ctx.drawImage(sprites,types.fisher_hut.x*8,types.fisher_hut.y*8,8,8*2,32*x,32*(y-1),32,32*2)																		
+					ctx.drawImage(sprites,Type.fisher_hut.x*8,Type.fisher_hut.y*8,8,8*2,32*x,32*(y-1),32,32*2)																		
 				}
 				
 				if(field.steps){
 					if(field.steps == "fromLeft"){
-						ctx.drawImage(sprites,types.stepsRight.x*8,types.stepsRight.y*8,8,8,32*x,32*y,32,32)																		
+						ctx.drawImage(sprites,Type.stepsRight.x*8,Type.stepsRight.y*8,8,8,32*x,32*y,32,32)																		
 					}
 					if(field.steps == "fromRight"){
-						ctx.drawImage(sprites,types.stepsLeft.x*8,types.stepsLeft.y*8,8,8,32*x,32*y,32,32)																		
+						ctx.drawImage(sprites,Type.stepsLeft.x*8,Type.stepsLeft.y*8,8,8,32*x,32*y,32,32)																		
 					}
 					if(field.steps == "fromDown"){
-						ctx.drawImage(sprites,types.stepsUp.x*8,types.stepsUp.y*8,8,8,32*x,32*y,32,32)																		
+						ctx.drawImage(sprites,Type.stepsUp.x*8,Type.stepsUp.y*8,8,8,32*x,32*y,32,32)																		
 					}
 					if(field.steps == "fromUp"){
-						ctx.drawImage(sprites,types.stepsDown.x*8,types.stepsDown.y*8,8,8,32*x,32*y,32,32)																		
+						ctx.drawImage(sprites,Type.stepsDown.x*8,Type.stepsDown.y*8,8,8,32*x,32*y,32,32)																		
 					}
 					if(field.steps == "steps"){
-						ctx.drawImage(sprites,types.steps.x*8,types.steps.y*8,8,8,32*x,32*y,32,32)																		
+						ctx.drawImage(sprites,Type.steps.x*8,Type.steps.y*8,8,8,32*x,32*y,32,32)																		
 					}
 				}
 				
-				if(field.unit.subType == 'twig'){
-					X=types.twig.x*8;
-					Y=types.twig.y*8;
+				if(field.unit.subType == 'small_branch'){
+					X=Type.twig.x*8;
+					Y=Type.twig.y*8;
 					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)	
 				}else if(field.unit.subType == 'unknownInTheSnow'){
-					X=types.unknown_item.x*8;
-					Y=types.unknown_item.y*8;
+					X=Type.unknown_item.x*8;
+					Y=Type.unknown_item.y*8;
 					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)	
 				}else if(field.unit.type == 'corpse'){
-					X=types.man.x*8;
-					Y=types.man.y*8;
+					X=Type.man.x*8;
+					Y=Type.man.y*8;
 					ctx.drawImage(sprites,X,Y,8,8,32*x,32*y,32,32)	
+				}else if(field.unit.subType == 'camp_fire'){
+					AnimatedSprite.all.CAMP_FIRE.draw(ctx,box(32*x,32*y,32,32))
 				}
 			}
 		}	
 
 		if(map.get(Game.player.position.x,Game.player.position.y).type != 7){
-			X=types.guy.x*8;
-			Y=types.guy.y*8;
+			X=Type.guy.x*8;
+			Y=Type.guy.y*8;
 			if(Game.player.moving){				
 				if(Game.player.movingDirection.y == -1){
 					if(Game.player.movingDirection.x == -1){
@@ -357,6 +369,10 @@ function MapDrawer(ctx, map, stepManager){
 						AnimatedSprite.all.PLAYER_CHAR_MAN.draw(ctx,box(32*10-Game.player.mapShift.x,32*10-Game.player.mapShift.y,32,32))
 					}					
 				}
+			}else if(Game.player.timeNearCampFire && Date.now() - Game.player.timeNearCampFire > 5000){
+				X=Type.guy_sitting.x*8;
+				Y=Type.guy_sitting.y*8;
+				ctx.drawImage(sprites,X,Y,8,8,32*10,32*10,32,32)							
 			}else{
 				ctx.drawImage(sprites,X,Y,8,8,32*10,32*10,32,32)							
 			}
@@ -374,28 +390,257 @@ var HEIGHT= 21*32;
 
 var gameCanvas, gameView, ctx, map, mapDrawer, stepManager, overlayCanvas, mapCanvas;
 
+function Item(id,name,maxStackSize,image,boundings, updateFrame, onCreate, onUse){
+	this.boundings = (boundings instanceof Array) ? boundings : [boundings];
+	this.maxStackSize = maxStackSize
+	this.id = id
+	this.name = name
+	this.getName = function(){
+		return this.name;
+	};	
+	this.canBeUsed = function(){return onUse ? true : false};
+	this.weight = 0;
+	this.space = 0;
+	this.fillStatus = 0;	
+	(onCreate || function(){})(this)
+	this.use = function(){
+		if(onUse){
+			onUse(this);
+		}
+	}
+	this.frame = 0;
+	this.updateFrame = updateFrame || function(){}
+	this.drawOn = function(ctx,target){
+		this.updateFrame(this);
+		ctx.drawImage(image,this.boundings[this.frame].x,this.boundings[this.frame ].y,this.boundings[this.frame ].width,this.boundings[this.frame ].height,target.x,target.y,target.width,target.height)
+	}
+}
+Item.all = {}
+Item.add = function(id,name,maxStackSize,image,bounding,updateFrame, onCreate, onUse){
+	Item.all[id] = new Item(id,name,maxStackSize,image,bounding, updateFrame, onCreate, onUse)
+}
+
+function Slot(item, number){	
+	this.getText = function(){
+		return this.item.getName()+(this.stackSize > 1 ? (" X "+this.stackSize) : "")
+	}
+	this.item = item;
+	this.stackSize = number || 1;
+	this.contains = function(item){
+		return this.item.id == item.id;
+	}
+	this.setItem = function(item, number){
+		var _number = number || 1
+		this.item = item
+		this.stackSize = number;
+	}
+	this.canBeStacked = function(number){
+		var _number = number || 1
+		return this.stackSize + _number <= this.item.maxStackSize
+	}
+	this.add = function(number){
+		var _number = number || 1
+		if(this.canBeStacked(_number)){
+			this.stackSize+= _number;
+		}
+	}
+	this.clear = function(){
+		this.item = Item.all.nothing;
+		this.stackSize = 1;
+	}
+	this.remove = function(n){
+		var removeable = Math.min(n,this.stackSize)
+		this.stackSize -= removeable;
+		if(this.stackSize == 0){
+			this.clear();
+		}
+		return removeable;
+	}
+}
+
+function Inventory(){
+	var inventorySlots = [];
+	this.maxSize = 6;
+	
+	this.containsSomething = function(){
+		for(var slot of inventorySlots){		
+			if(slot.item.id != Item.all.nothing.id){			
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	this.reset = function(){
+		inventorySlots = [];
+		for(var i=0; i<this.maxSize; i++){
+			inventorySlots.push(new Slot(Item.all.nothing))
+		}	
+	}
+	this.size = function(){
+		return inventorySlots.length
+	}
+	this.addItem = function(item, number){		
+		var _number = number || 1
+		if(this.canBeStacked(item, _number)){						
+			return this.stack(item, _number);
+		}else if(this.hasSpaceLeft()){
+			return this.addToSlot(item, _number);
+		}
+		return null;
+	}
+	this.stack = function(item, number){
+		var _number = number || 1
+		var slot = this.getSlotByItem(item, _number);
+		if(slot) slot.add(_number);
+		return slot;
+	}
+	this.canBeStacked = function(item,number){
+		var _number = number || 1
+		var slot = this.getSlotByItem(item, _number);			
+		return slot ? slot.canBeStacked(_number) : false;
+	}
+	this.getSlotByItem = function(item, number){
+		var _number = number || 1
+		for(var slot of inventorySlots){		
+			if(slot.contains(item) && slot.canBeStacked(_number)){			
+				return slot;
+			}
+		}
+		return null;
+	}
+	this.hasSpaceLeft = function(){
+		for(var slot of inventorySlots){
+			if(slot.item.id == 'nothing') return true;
+		}
+		return false
+	}
+	this.hasItem = function(item, number){
+		var _number = number  || 1;
+		for(var slot of inventorySlots){
+			if(slot.item.id == item.id && slot.stackSize >= _number) return true;
+		}
+		return false
+	}
+	this.addToSlot = function(item, number){
+		var _number = number || 1
+		for(var slot of inventorySlots){
+			if(slot.item.id == 'nothing') {
+				slot.setItem(item, _number)
+				return slot;				
+			}
+		}				
+		return null;
+	}
+	this.remove = function(item,number){
+		var unitsLeft = number || 1
+		for(var slot of inventorySlots){
+			if(slot.item.id == item.id){
+				unitsLeft -= slot.remove(unitsLeft)								
+			}			
+			if(unitsLeft == 0){
+				break;
+			}
+		}
+	}
+	this.hasFreeSlotFor = function(item,number){
+		var _number = number || 1
+		for(var slot of inventorySlots){
+			if(slot.item.id == 'nothing' || (slot.item.id == item.id && slot.canBeStacked(_number))) return true;
+		}
+	}
+	this.getSlot = function(n){		
+		return inventorySlots[n];
+	}
+}
+
 var keysDown = [];
 var passableTypes = [30,31,32,9,0,6,10,100,110,120,130,140,150,160,170,180,190,200,210,11,12,13,14,15,16,17,18,19,20,21,22,61,62,63,64]
-var types = {}
+var campFireTypes = [6,61,62,63,64,0,30,31,32]
 var sprites
 
 var Game = {
+	campFires : [],
+	inventoryVisible : false,
 	time: 0,
+	campFireBuildingMode : false,		
+	canBuildCampFire : function(campFireField){
+		return (arrayContains(campFireField.type,campFireTypes) && campFireField.unit == Units.EMPTY)
+	},
+	startCampFire : function(){
+		this.campFireBuildingMode = DIRECTION.N;
+	},
+	addCampFire : function(field){		
+		this.campFires.push(field)
+		field.unit = Units.building.camp_fire();
+		field.unit.startTime = Date.now();
+		if(	Game.getPlayerOnMap(DIRECTION.N) == field ||
+			Game.getPlayerOnMap(DIRECTION.E) == field ||
+			Game.getPlayerOnMap(DIRECTION.W) == field ||
+			Game.getPlayerOnMap(DIRECTION.S) == field
+		){
+			Game.player.timeNearCampFire = Date.now();
+		}
+	},
+	setCampFireBuildingMode : function(direction){
+		this.campFireBuildingMode = direction;
+		Game.dialog.reset();
+	},
+	stopCampFireBuildingMode : function(){
+		this.campFireBuildingMode = false;
+		Game.dialog.reset();
+	},
+	selectedInventorySlot: 0,
 	isPassable : function (x,y){
-		return arrayContains(map.get(x,y).unit.subType,[Units.EMPTY.subType]) && arrayContains(map.get(x,y).type,passableTypes)
+		return arrayContains(map.get(x,y).unit.subType,[Units.EMPTY.subType,'small_branch']) && arrayContains(map.get(x,y).type,passableTypes)
+	},
+	showLootingDialog : function(unit){
+		Game.looting.showDialog = true;
+		Game.looting.unit = unit;
+		Game.selectedInventorySlot = 0;
+	},
+	hideLootingDialog : function(){
+		Game.looting.showDialog = false;
+		Game.looting.unit = null;
+		Game.selectedInventorySlot = 0;
+		Game.dialog.reset();
+	},
+	looting : {
+		showDialog : false,
+		unit : null,		
+		currentPickUpNumber : 0,
+		pickUpInProgress : false,
+		pickUp : function(){
+			var item = Game.looting.unit.inventory.getSlot(Game.selectedInventorySlot).item;
+			if(Game.player.inventory.hasFreeSlotFor(item, this.currentPickUpNumber)){
+				Game.player.inventory.addItem(item, this.currentPickUpNumber)				
+				Game.looting.unit.inventory.remove(item, this.currentPickUpNumber)
+			}
+		}
 	},
 	player : {
-		inventory : [],
+		status : {
+			hunger : 0,
+			thirst : 0,
+			temperature : 0,
+			mood : 0,
+			hungerThresholds : [800,1600,2000,2200],
+			thirstThresholds : [800,1600,2000,2200],
+			temperatureThresholds : [800,1600,2000,2200],
+		},
+		inventory : new Inventory(),
 		moving : false,
 		mapShift : p(0,0),
 		maxShift : p(32,32),
 		position : p(10,10),
 		movingDirection : p(0,0),
 		startTime : 0,
-		startMoving : function(direction){ 			
+		timeNearCampFire : 0,
+		startMoving : function(direction){ 								
 			this.movingDirection = direction;
 			this.startTime = Date.now();
 			if(!this.moving){
+				Game.player.timeNearCampFire = 0
 				var speed = 2
 				if(direction.x ==0 || direction.y == 0) speed = 2
 				this.mapShift.x += speed*-this.movingDirection.x
@@ -414,10 +659,55 @@ var Game = {
 			if(this.movingDirection.x ==0 || this.movingDirection.y == 0) speed = 2
 			this.mapShift.x -= speed*this.movingDirection.x
 			this.mapShift.y -= speed*this.movingDirection.y
-			if(Math.abs(this.mapShift.x) >= this.maxShift.x || Math.abs(this.mapShift.y) >= this.maxShift.y){
+			if(Math.abs(this.mapShift.x) >= this.maxShift.x || Math.abs(this.mapShift.y) >= this.maxShift.y){				
+				Game.player.status.hunger+=1;				
+				Game.player.status.thirst+=2;				
 				Game.player.position.x = ((Game.player.position.x+this.movingDirection.x+map.width())%map.width())
 				Game.player.position.y = ((Game.player.position.y+this.movingDirection.y+map.height())%map.height())
-				this.stopMoving();				
+				this.stopMoving();							
+				if(	arrayContains('camp_fire', [Game.getPlayerOnMap(DIRECTION.NE).unit.subType,
+					Game.getPlayerOnMap(DIRECTION.NW).unit.subType,
+					Game.getPlayerOnMap(DIRECTION.SE).unit.subType,
+					Game.getPlayerOnMap(DIRECTION.SW).unit.subType,
+					Game.getPlayerOnMap(DIRECTION.N).unit.subType,
+					Game.getPlayerOnMap(DIRECTION.E).unit.subType,
+					Game.getPlayerOnMap(DIRECTION.W).unit.subType,
+					Game.getPlayerOnMap(DIRECTION.S).unit.subType])
+				){										
+					Game.player.timeNearCampFire = Date.now();
+				}
+			}
+		}
+	},	
+	startLootingToInventory : function(){
+		var slot = Game.looting.unit.inventory.getSlot(Game.selectedInventorySlot)
+		Game.looting.currentPickUpNumber = slot.stackSize;
+		Game.looting.pickUpInProgress = true;		
+	},
+	stopLootingToInventory : function(){
+		Game.looting.currentPickUpNumber = 0;
+		Game.looting.pickUpInProgress = false;		
+	},
+	lastTemperatureUpdate : Date.now(),
+	currentTemperatureModifier : 1.3,
+	update : function(){
+		if(Date.now() - Game.lastTemperatureUpdate > 1000){
+			Game.lastTemperatureUpdate = Date.now()
+			var modifier = 0;
+			if(!w(10)){
+				if(w(2)){
+					modifier = 0.1;
+				}else{
+					modifier = 0.1;
+				}
+			}
+			
+			Game.currentTemperatureModifier = Math.max(1.3,Math.min(5, Game.currentTemperatureModifier+modifier));							
+			
+			if(Game.player.timeNearCampFire){			
+				Game.player.status.temperature = Math.max(0,Game.player.status.temperature-50)
+			}else{
+				Game.player.status.temperature += Game.currentTemperatureModifier;			
 			}
 		}
 	},
@@ -434,12 +724,19 @@ var Game = {
 			Game.findSomething(Game.search.unit)
 		},
 		start : function(unit,outcome,text){
-			this.message = text || "LET'S SEE IF I CAN FIND SOMETHING";
+			this.message = text || ["LET'S SEE IF I CAN FIND SOMETHING","WHAT HAVE WE HERE?","THERE MUST BE SOMETHING _","JUST A SEC _"].rnd();
 			this.unit = unit;
 			this.searchTime = unit.searchTime;
 			this.searchTimeToDo = unit.searchTime;
 			this.searchIntervalStart = Game.time;
 			this.outcome = outcome;
+		},
+		cancel : function(){
+			this.outcome = null;
+			this.message = null;
+			this.searchTimeToDo = 0;
+			this.searchIntervalStart = 0;
+			this.searchTime = 0;
 		},
 		update : function(time){
 			if(this.searchTimeToDo == 0) return;
@@ -458,8 +755,10 @@ var Game = {
 		}
 	},		
 	findSomething : function(unit){
-		if(unit.inventory.length == 0){
+		if(unit.inventory.length == 0 || unit.inventory[0].item == Item.all.nothing){
 			Game.setMessage(new Message("THERE'S NOTHING I COULD USE."))
+		}else{		
+			Game.setMessage(new Message("I FOUND: "+unit.inventory[0].getText(),new Option('C','PICK UP')))			
 		}
 		unit.searched = true;
 	},
@@ -470,6 +769,9 @@ var Game = {
 			Game.dialog.message = null;
 			textPainter.reset();
 		},		
+	},
+	hasMessageToSet : function(field){					
+		return field.unit.message;			
 	},
 	setMessageByField : function(field){					
 		Game.currentInterest = null;
@@ -482,7 +784,30 @@ var Game = {
 		if(!keepCurrentInterest) Game.currentInterest = null
 		Game.dialog.message = message
 		textPainter.reset();		
-	}	
+	},
+	showInventory : function(){
+		this.inventoryVisible = true;
+	},
+	hideInventory : function(){
+		this.inventoryVisible = false;
+		textPainter.reset();	
+		this.selectedInventorySlot = 0;
+	},
+	canStartCampFire : function(){
+		if(
+			Game.player.inventory.hasItem(Item.all.small_branch,5) &&
+			Game.player.inventory.hasItem(Item.all.matches)
+		){
+			return true;
+		}
+	},
+	getPlayerOnMap : function(direction,times){
+		if(!direction){
+			direction = p(0,0)
+		}
+		
+		return map.get(Game.player.position.x+direction.x*(times || 1),Game.player.position.y+direction.y*(times || 1))		
+	}
 }
 
 function box(x,y,w,h){	
@@ -532,7 +857,19 @@ function TextPainter(){
 		"]" : box(146,0,4,7),
 		"(" : box(149,0,4,7),
 		")" : box(152,0,4,7),
-		
+		":" : box(155,0,3,7),
+		"<" : box(157,0,6,7),
+		">" : box(162,0,6,7),
+		"0" : box(0,6,5,7),
+		"1" : box(4,6,4,7),
+		"2" : box(7,6,5,7),
+		"3" : box(11,6,5,7),
+		"4" : box(15,6,5,7),
+		"5" : box(19,6,5,7),
+		"6" : box(23,6,5,7),
+		"7" : box(27,6,5,7),
+		"8" : box(31,6,5,7),
+		"9" : box(35,6,5,7),
 	}
 	
 	this.reset = function(){
@@ -549,24 +886,55 @@ function TextPainter(){
 				ctx.drawImage(textSprite,letter.x,letter.y,letter.width,letter.height,x+xShift,y,letter.width*4,letter.height*4)
 				xShift+=letter.width*4-4*1
 			}else{
-				xShift+=5*4;
+				xShift+=4*4;
 			}
 		}
 		y+=7*4	
 	}
 }
 
-function Unit(type,subType,messages, lootable, minSearchTime, maxSearchTime){
+function Unit(type,subType,messages, lootable, minSearchTime, maxSearchTime, loot,numItems){
 	this.type = type;
 	this.subType = subType;
 	this.message = messages.rnd()
-	this.inventory = [];
+	this.inventory = new Inventory();	
+	this.inventory.reset();
 	this.isLootable = function(){
-		return lootable || false;
+		return (lootable && this.searched) || false;
 	}
+	this.isSearchable = function(){return lootable};
 	this.canBePickedUp = function(){return false};
 	this.canBeDiggedUp = function(){return false};
 	this.searchTime = minSearchTime + w(maxSearchTime-minSearchTime) + 1;
+	this.searched = false;
+	this.search = function(){
+		if(!this.searched){
+			Game.search.start(this,function(unit){
+				unit.searched = true;			
+				for(var i=0; i<numItems; i++) {
+					unit.rollInventory();
+				}
+				Game.dialog.reset();
+				if(unit.inventory.containsSomething()){
+					Game.showLootingDialog(unit);
+				}else{
+					Game.setMessage(new Message("NOTHING USEFULL HERE."));
+				}				
+			});							
+		}else if(this.inventory.containsSomething()){
+			Game.showLootingDialog(this);
+		}else{
+			Game.setMessage(new Message("THERE'S NOTHING LEFT\nTHAT I COULD USE."));
+		}
+	}
+	this.rollInventory = function(){
+		var looting = getFromProbabilityArray(loot)
+		var slot = looting.getSlot();
+		this.inventory.addItem(slot.item).stackSize = slot.stackSize;
+		looting.item = Item.all.nothing;
+		looting.minCount = 1;
+		looting.maxCount = 1;		
+	}
 }
 
 function UnitPickupItem(name,subType,message){
@@ -575,14 +943,14 @@ function UnitPickupItem(name,subType,message){
 	this.subType = subType;
 	this.message = message;
 	this.inventory = [name];
+	this.isSearchable = function(){return false;}
 	this.isLootable = function(){return false;}
 	this.canBePickedUp = function(){return true};
 	this.canBeDiggedUp = function(){return false};
 	this.searchTime = 0;
 }
 
-function UnitDigUpItem(subType, messages, minSearchTime, maxSearchTime,loot){
-
+function getFromProbabilityArray(loot){
 	var sum = 0;
 	for(var i=0; i<loot.length; i++){
 		sum += loot[i].probability
@@ -591,11 +959,17 @@ function UnitDigUpItem(subType, messages, minSearchTime, maxSearchTime,loot){
 	var current = 0;
 	for(var i=0; i<loot.length; i++){
 		if(current + loot[i].probability >= r){
-			this.loot = loot[i];
+			return loot[i];
+			break;
 		}
 		current += loot[i].probability		
 	}	
+	return null;
+}
 
+function UnitDigUpItem(subType, messages, minSearchTime, maxSearchTime,loot){	
+
+	this.loot = getFromProbabilityArray(loot)
 	this.type = 'item';
 	this.subType = subType;
 	this.message = new Message(messages.rnd(),new Option('C','DIG UP'));
@@ -604,54 +978,37 @@ function UnitDigUpItem(subType, messages, minSearchTime, maxSearchTime,loot){
 	this.canBePickedUp = function(){return false};
 	this.canBeDiggedUp = function(){return true};
 	this.searchTime = this.loot.min + w(this.loot.max-this.loot.min) + 1;
+	this.isSearchable = function(){return true};
 	this.digUp = function(){
 		return this.loot.unit();
+	}
+	this.search = function(){
+		Game.search.start(this, function(unit){
+			var newUnit = unit.digUp()
+			Game.currentInterest.unit = newUnit;
+			Game.search.unit = newUnit;
+			Game.dialog.reset();
+			Game.setMessageByField(Game.currentInterest);							
+		}, "WHAT HAVE WE HERE?");	
 	}
 }
 
 var Units = {
-	add : function(type,subType,messages,lootable,minSearchTime,maxSearchTime){
+	add : function(type,subType,messages,lootable,minSearchTime,maxSearchTime,loot,minItems,maxItems){
 		if(!Units[type]) Units[type] = {}
-		if(!Units[type][subType]) Units[type][subType] = function() { return new Unit(type,subType,messages,lootable,minSearchTime,maxSearchTime)};
+		if(!Units[type][subType]) Units[type][subType] = function() { return new Unit(type,subType,messages,lootable,minSearchTime,maxSearchTime,loot,minItems,maxItems)};
 	},
-	addPickupItem : function(name,subType,key,text){
+	addPickupItem : function(name,subType){
 		if(!Units['item']) Units['item'] = {}
-		if(!Units['item'][subType]) Units['item'][subType] = function() { return new UnitPickupItem(name,subType,new Message(null,new Option(key,text)))};
+		if(!Units['item'][subType]) Units['item'][subType] = function() { return new UnitPickupItem(name,subType,new Message(null,new Option('C','PICK UP '+name)))};
 	},
 	addDigUpItem : function(subType,messages,minSearchTime,maxSearchTime,loot){
 		if(!Units['item']) Units['item'] = {}
 		if(!Units['item'][subType]) Units['item'][subType] = function() { return new UnitDigUpItem(subType,messages,minSearchTime,maxSearchTime,loot)};
 	}
 }
-Units.add('corpse','elder_man'		,[new Message("THE FROZEN CORPSE OF AN ELDER MAN.\nWHAT A MESS!",new Option('C','SEARCH'))], true,3,10);
-Units.add('corpse','elder_women'	,[new Message("THE DEAD BODY OF AN ELDER WOMAN.\nI WONDER WHAT HAPPENED TO HER.",new Option('C','SEARCH'))], true,3,10);
-Units.add('corpse','women'			,[new Message("SHE'S DEAD.\nWHAT WAS SHE DOING OUT HERE?",new Option('C','SEARCH'))], true,3,10);
-Units.add('corpse','man'			,[new Message("THIS MAN IS DEAD. HE IS FROZEN.\nI CAN'T SEE ANY WOUNDS.",new Option('C','SEARCH'))], true,3,10);
-Units.add('building' ,'house',[
-		new Message("SHELTER! FINALLY!\nBUT THE DOOR IS LOCKED."),
-		new Message("THIS ONE'S STILL STANDING.\nLET'S HAVE A LOOK INSIDE."),
-		new Message("A SAFE PLACE TO HIDE\nFROM THE WIND?")
-	]);
-Units.add('building' ,'ruin',[
-		new Message("THIS PLACE IS COLLAPSED."),
-		new Message("THE REMNANTS OF A HOUSE.\nLOOKS LIKE IT COLLAPSED LONG AGO."),
-		new Message("ONCE, THIS WAS THE HOME OF SOMEBODY.\nNOW THIS PLACE IS A RUIN.")
-	]);
-Units.add('building' ,'fisher_hut',[
-		new Message("AN OLD AND ABANDONED FISHING HUT.\nAT LEAST SOME TYPE OF SHELTER."),
-		new Message("A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE.")
-	]);
-// roof gets same message as body programatically
-Units.add('building' ,'fisher_hut_roof',[]);		
 Units.EMPTY = new Unit('empty','empty',[])
-Units.STONE = new Unit('landscape','stone',[])
-Units.addPickupItem('SMALL BRANCH','twig','C','PICK UP SMALL BRANCH');
-Units.addDigUpItem('unknownInTheSnow',['THERE IS SOMETHING BENEATH THE SNOW.'],3,6,[
-	new Diggable(Units.item.twig,2,3,10),
-	new Diggable(Units.corpse.elder_man,4,6,1),
-	new Diggable(Units.corpse.elder_women,4,6,1),
-	new Diggable(Units.corpse.man,4,6,1),
-	new Diggable(Units.corpse.women,4,6,1)]);
+	
 
 function Diggable(unit,min,max,probability){
 	this.unit =unit;
@@ -671,7 +1028,7 @@ function updateShader(){
 	shaderCtx.clearRect(0,0,WIDTH,HEIGHT)
 	for(var y=0; y<HEIGHT; y++){
 		for(var x=0; x<HEIGHT; x++){	
-			var alpha = Math.min(Math.sqrt(Math.pow(WIDTH/2,2)+Math.pow(HEIGHT/2,2))/snowStorm,Math.sqrt(Math.pow(x-WIDTH/2,2)+Math.pow(y-HEIGHT/2,2)))/(Math.sqrt(Math.pow(WIDTH/2,2)+Math.pow(HEIGHT/2,2))/snowStorm)
+			var alpha = Math.min(Math.sqrt(Math.pow(WIDTH/2,2)+Math.pow(HEIGHT/2,2))/Game.currentTemperatureModifier,Math.sqrt(Math.pow(x-WIDTH/2,2)+Math.pow(y-HEIGHT/2,2)))/(Math.sqrt(Math.pow(WIDTH/2,2)+Math.pow(HEIGHT/2,2))/Game.currentTemperatureModifier)
 			shaderCtx.fillStyle="rgba(255,255,255,"+alpha+")"
 			shaderCtx.fillRect(x,y,1,1)
 		}
@@ -685,63 +1042,166 @@ function makePixelPerfect(ctx){
 	ctx.imageSmoothingEnabled = false;
 }
 
+function Type(x,y,id){
+	this.x = x;
+	this.y = y;
+	this.id = id;
+	Type.byId[id] = this;
+}
+Type.byId = []
+
 var textPainter, overlayCtx, shaderCtx, shaderCanvas,crissleCtx,crissleCanvas;
+
+function Loot(item, minCount, maxCount, probability){
+	this.item = item;
+	this.minCount = minCount;
+	this.maxCount = maxCount;
+	this.probability = probability;
+	this.getSlot = function(){
+		return new Slot(item,minCount+w(maxCount-minCount+1))
+	}
+}
 function start(){
 	
 	sprites = img('sprites.png')
 	
+	Item.add('nothing','NOTHING',1,sprites,box(0,7*8,8,8))
+	Item.add('small_branch','SMALL BRANCH',10,sprites,box(0,7*8,8,8))
+	Item.add('matches','MATCHES',99,sprites,box(7*8,7*8,8,8))		
+	Item.add('book','BOOK',5,sprites,box(8*8,7*8,8,8))		
+	Item.add('canned_food','CANNED FOOD',5,sprites,box(14*8,7*8,8,8),function(){},function(){},function(item){
+		if(Math.floor(Game.player.status.hunger * 25 /Game.player.status.hungerThresholds[3]) > 0){
+			Game.player.status.hunger = Math.max(0,Game.player.status.hunger - Game.player.status.hungerThresholds[0])
+			Game.player.inventory.remove(item)
+		}
+	})		
+	Item.add('water','CLEAN WATER IN A BOTTLE',1,sprites,[box(9*8,6*8,8,8),box(10*8,6*8,8,8),box(11*8,6*8,8,8),box(12*8,6*8,8,8),box(13*8,6*8,8,8)],function(item){
+		item.frame = 4-item.fillStatus
+	},function(item){
+		item.fillStatus = 1+w(4);
+		item.getName = function(){
+			if(item.fillStatus == 0){
+				return 'EMPTY BOTTLE'
+			}
+			return this.name + " ("+(this.fillStatus*250)+" ML)"
+		}
+	},function(item){
+		if(item.fillStatus > 0 && Math.floor(Game.player.status.thirst * 25 /Game.player.status.thirstThresholds[3]) > 0){
+			Game.player.status.thirst = Math.max(0,Game.player.status.thirst - Game.player.status.thirstThresholds[0])
+			item.fillStatus--;			
+		}
+	})	
+	
+	Units.add('corpse','elder_man'		,[new Message("THE FROZEN CORPSE OF AN ELDER MAN.\nWHAT A MESS!",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
+	Units.add('corpse','elder_women'	,[new Message("THE DEAD BODY OF AN ELDER WOMAN.\nI WONDER WHAT HAPPENED TO HER.",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
+	Units.add('corpse','women'			,[new Message("SHE'S DEAD.\nWHAT WAS SHE DOING OUT HERE?",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
+	Units.add('corpse','man'			,[new Message("THIS MAN IS DEAD. HE IS FROZEN.\nI CAN'T SEE ANY WOUNDS.",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
+	Units.add('building' ,'house',[
+			new Message(
+				["SHELTER! FINALLY!","THIS ONE'S STILL STANDING.\nLET'S HAVE A LOOK INSIDE.","A SAFE PLACE TO HIDE\nFROM THE WIND?"].rnd(),
+				new Option('C','SEARCH')
+			)
+		], true,4,7,[new Loot(Item.all.nothing,1,1,30),new Loot(Item.all.water,1,1,1),new Loot(Item.all.canned_food,1,2,1),new Loot(Item.all.matches,12,20,10),new Loot(Item.all.book,1,1,1)],3);
+	Units.add('building' ,'ruin',[
+			new Message("THIS PLACE IS COLLAPSED."),
+			new Message("THE REMNANTS OF A HOUSE.\nLOOKS LIKE IT COLLAPSED LONG AGO."),
+			new Message("ONCE, THIS WAS THE HOME OF SOMEBODY.\nNOW THIS PLACE IS A RUIN.")
+		]);
+	Units.add('building' ,'fisher_hut',[
+			new Message(
+				["AN OLD AND ABANDONED FISHING HUT.\nAT LEAST SOME TYPE OF SHELTER.","A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE."].rnd(),
+				new Option('C','SEARCH')
+			)
+		], true,3,5,[new Loot(Item.all.nothing,1,1,30),new Loot(Item.all.water,1,1,1),new Loot(Item.all.canned_food,1,2,1),new Loot(Item.all.matches,12,20,10),new Loot(Item.all.book,1,1,1)],3);		
+	Units.add('building' ,'camp_fire',[
+			//new Message("WELL, IT STILL BURNS."),
+			//new Message("ONE LIGHT IN THE DARK."),
+			//new Message("KEEPS THE COLD AWAY."),
+			new Message("I MIGHT SURVIVE A BIT LONGER NOW."),
+		]);
+	// roof gets same message as body programatically
+	Units.add('building' ,'fisher_hut_roof',[]);		
+	Units.STONE = new Unit('landscape','stone',[])
+	Units.addPickupItem(Item.all.small_branch.name,Item.all.small_branch.id);
+	Units.addPickupItem('MISC STUFF','misc_stuff');
+	
+	Units.addDigUpItem('unknownInTheSnow',['THERE IS SOMETHING BENEATH THE SNOW.'],3,6,[
+		new Diggable(Units.item.small_branch,2,3,10),
+		new Diggable(Units.corpse.elder_man,4,6,1),
+		new Diggable(Units.corpse.elder_women,4,6,1),
+		new Diggable(Units.corpse.man,4,6,1),
+		new Diggable(Units.corpse.women,4,6,1)]);
+	
+	Game.player.inventory.reset();
+	
+	Game.player.inventory.addItem(Item.all.matches,20)	
+	
+	/*
+	Game.player.inventory.addItem(Item.all.small_branch)
+	Game.player.inventory.getSlotByItem(Item.all.small_branch).stackSize = 5;
+	*/
+	Game.player.inventory.addItem(Item.all.canned_food,2)
+	Game.player.inventory.addItem(Item.all.water,1)
+	
+	AnimatedSprite.all.CAMP_FIRE = new AnimatedSprite(sprites,[box(9*8,7*8,8,8),box(9*8,8*8,8,8),box(9*8,9*8,8,8)])
 	AnimatedSprite.all.PLAYER_CHAR_MAN = new AnimatedSprite(sprites,[box(1*8,6*8,8,8),box(2*8,6*8,8,8)])
 	AnimatedSprite.all.PLAYER_CHAR_MAN_LEFT = new AnimatedSprite(sprites,[box(5*8,7*8,8,8),box(6*8,7*8,8,8)])
 	AnimatedSprite.all.PLAYER_CHAR_MAN_BACK = new AnimatedSprite(sprites,[box(1*8,7*8,8,8),box(2*8,7*8,8,8)])
 	AnimatedSprite.all.PLAYER_CHAR_MAN_BACK_LEFT = new AnimatedSprite(sprites,[box(3*8,7*8,8,8),box(4*8,7*8,8,8)])
 	
-	types.guy = p(0,0)
-	types.man = p(0,3)
-	types.tree1 = p(1,0)
-	types.tree2 = p(2,0)
-	types.tree3 = p(3,0)
-	types.tree4 = p(4,0)
-	types.grass = p(5,0)
-	types.grass_2 = p(3,6)
-	types.grass_3 = p(4,6)
-	types.grass_4 = p(5,6)
-	types.grass_5 = p(6,6)
-	types.twig = p(7,6)
-	types.unknown_item = p(8,6)
+	Type.guy = new Type(0,0)
+	Type.man = new Type(0,3)
+	Type.tree1 = new Type(1,0)
+	Type.tree2 = new Type(2,0)
+	Type.tree3 = new Type(3,0)
+	Type.tree4 = new Type(4,0)
+	Type.grass = new Type(5,0)
+	Type.grass_2 = new Type(3,6)
+	Type.grass_3 = new Type(4,6)
+	Type.grass_4 = new Type(5,6)
+	Type.grass_5 = new Type(6,6)
+	Type.twig = new Type(7,6)
+	Type.unknown_item = new Type(8,6)
 	
-	types.house = p(6,0)
-	types.hole = p(7,0)
-	types.stepsRight = p(8,0)	
-	types.ground = p(9,0)
-	types.see = p(10,0)
-	types.stepsDown = p(11,0)
-	types.stepsUp = p(12,0)
-	types.stepsLeft = p(13,0)
-	types.steps = p(14,0)
-	types.ground_2 = p(15,0)
-	types.see_n_w = p(0,1)
-	types.see_n_e = p(1,1)
-	types.see_s_w = p(2,1)
-	types.see_s_e = p(3,1)
-	types.see_w = p(4,1)
-	types.see_e = p(5,1)
-	types.see_e_x = p(6,1)
-	types.see_w_x = p(7,1)
-	types.see_n_x = p(8,1)
-	types.see_s_x = p(9,1)
-	types.see_sn_x = p(10,1)
-	types.see_we_x = p(11,1)
-	types.ground_3 = p(6,3)
-	types.ground_4 = p(7,3)
-	types.ruin= p(8,3)
-	types.speak= p(9,3)
-	types.single_lake= p(10,3)
+	Type.house = new Type(6,0)
+	Type.hole = new Type(7,0)
+	Type.stepsRight = new Type(8,0)	
+	Type.ground = new Type(9,0)
+	Type.see = new Type(10,0)
+	Type.stepsDown = new Type(11,0)
+	Type.stepsUp = new Type(12,0)
+	Type.stepsLeft = new Type(13,0)
+	Type.steps = new Type(14,0)
+	Type.ground_2 = new Type(15,0)
+	Type.see_n_w = new Type(0,1)
+	Type.see_n_e = new Type(1,1)
+	Type.see_s_w = new Type(2,1)
+	Type.see_s_e = new Type(3,1)
+	Type.see_w = new Type(4,1)
+	Type.see_e = new Type(5,1)
+	Type.see_e_x = new Type(6,1)
+	Type.see_w_x = new Type(7,1)
+	Type.see_n_x = new Type(8,1)
+	Type.see_s_x = new Type(9,1)
+	Type.see_sn_x = new Type(10,1)
+	Type.see_we_x = new Type(11,1)
+	Type.ground_3 = new Type(6,3)
+	Type.ground_4 = new Type(7,3)
+	Type.ruin= new Type(8,3)
+	Type.speak= new Type(9,3)
+	Type.single_lake= new Type(10,3)
 	
-	types.hutStart= p(3,4)
-	types.mirror_man= p(9,4)
+	Type.hutStart= new Type(3,4)
+	Type.mirror_man= new Type(9,4)
 	
-	types.fisher_hut= p(10,4)	
+	Type.fisher_hut= new Type(10,4)	
 
+	Type.camp_fire= new Type(9,7)	
+	Type.camp_fire_build= new Type(10,7)	
+	Type.camp_fire_impossible =new Type(11,7)	
+	Type.guy_sitting =new Type(12,7)
+
+	
 	textPainter = new TextPainter();
 	
 	crissleCanvas = createCanvas(WIDTH,HEIGHT,null,"crissleCanvas")
@@ -777,6 +1237,7 @@ function start(){
 	updateShader()
 	
 	document.body.appendChild(gameCanvas)
+	document.body.appendChild(document.getElementById('instructions'))
 	document.onkeydown = function(evt){
 		var code =  evt.keyCode? evt.keyCode : evt.charCode;
 		if(keysDown[code]) return
@@ -784,46 +1245,106 @@ function start(){
 		
 		if(code == KeyCode.LEFT){
 			pressKey(KeyCode.LEFT)				
+			if(Game.looting.showDialog && Game.looting.pickUpInProgress){
+				Game.looting.currentPickUpNumber = Math.max(1,Game.looting.currentPickUpNumber-1)
+			}else if((Game.inventoryVisible || Game.looting.showDialog) && Game.selectedInventorySlot % 2) Game.selectedInventorySlot -= 1							
+			if(Game.campFireBuildingMode) {
+				Game.setCampFireBuildingMode(DIRECTION.W)
+			}
 		}
 		else if(code == KeyCode.UP){
 			pressKey(KeyCode.UP)			
+			if(Game.looting.showDialog && Game.looting.pickUpInProgress){
+				
+			}else if((Game.inventoryVisible || Game.looting.showDialog) && Game.selectedInventorySlot > 1){
+				Game.selectedInventorySlot -= 2
+			}
+			if(Game.campFireBuildingMode) {
+				Game.setCampFireBuildingMode(DIRECTION.N)
+			}
 		}
 		else if(code == KeyCode.RIGHT){ 
 			pressKey(KeyCode.RIGHT)			
+			if(Game.looting.showDialog && Game.looting.pickUpInProgress){
+				var slot = Game.looting.unit.inventory.getSlot(Game.selectedInventorySlot);
+				var max = slot.stackSize;
+				if(Game.player.inventory.hasSpaceLeft() || Game.player.inventory.canBeStacked(slot.item,Math.min(max,Game.looting.currentPickUpNumber+1))){				
+					Game.looting.currentPickUpNumber = Math.min(max, Game.looting.currentPickUpNumber+1)
+				}
+			}else if((Game.inventoryVisible || Game.looting.showDialog) && Game.selectedInventorySlot % 2 == 0) Game.selectedInventorySlot += 1				
+			if(Game.campFireBuildingMode) {
+				Game.setCampFireBuildingMode(DIRECTION.E)
+			}
 		}
 		else if(code == KeyCode.DOWN){
 			pressKey(KeyCode.DOWN)			
+			if(Game.looting.showDialog && Game.looting.pickUpInProgress){
+				
+			}else if((Game.inventoryVisible || Game.looting.showDialog) && Game.selectedInventorySlot < 4){
+				Game.selectedInventorySlot += 2
+			}
+			if(Game.campFireBuildingMode) {
+				Game.setCampFireBuildingMode(DIRECTION.S)
+			}
+		} else if(code == KeyCode.S){			
+			if(Game.inventoryVisible) {
+				// Start campfire
+				Game.hideInventory();
+				Game.dialog.reset();
+				Game.startCampFire();
+			}else if(Game.campFireBuildingMode && Game.canBuildCampFire(Game.getPlayerOnMap(Game.campFireBuildingMode))){
+				Game.addCampFire(Game.getPlayerOnMap(Game.campFireBuildingMode))
+				Game.player.inventory.remove(Item.all.small_branch,5)
+				Game.player.inventory.remove(Item.all.matches,1)
+				Game.stopCampFireBuildingMode()
+			}
+		}else if(code == KeyCode.I && !Game.looting.showDialog){
+			// inventory			
+			Game.dialog.reset();
+			if(!Game.inventoryVisible) Game.showInventory();
+			else Game.hideInventory();
+		} else if(code == KeyCode.D){
+			if(Game.inventoryVisible){
+				var slot = Game.player.inventory.getSlot(Game.selectedInventorySlot);
+				Game.player.inventory.getSlot(Game.selectedInventorySlot).clear()
+			}
 		} else if(code == KeyCode.C){
 			pressKey(KeyCode.C)
-			if(Game.currentInterest){
-				if(Game.currentInterest.unit.isLootable()){
-					// SEARCH current interest
-					Game.search.start(Game.currentInterest.unit);
+			if(Game.inventoryVisible && Game.player.inventory.getSlot(Game.selectedInventorySlot).item.canBeUsed()){
+				Game.player.inventory.getSlot(Game.selectedInventorySlot).item.use();
+			}else if(Game.currentInterest){
+				if(Game.looting.pickUpInProgress){									
+					if(Game.looting.currentPickUpNumber > 0){						
+						Game.looting.pickUp()
+						Game.stopLootingToInventory() 								
+					}				
+				}else if(Game.looting.showDialog){									
+					if(Game.looting.unit.inventory.getSlot(Game.selectedInventorySlot).item != Item.all.nothing){
+						Game.startLootingToInventory() 						
+					}					
 				}else if(Game.currentInterest.unit.canBePickedUp()){
 					// PICK UP current interest
-					Game.currentInterest.unit = Units.EMPTY;
-					if(!w(3)) {
-						Game.setMessage([	
-							new Message('GOT IT!'),
-							new Message('THAT WILL BE USEFUL'),
-							new Message('MIGHT BE USEFUL'),
-							new Message("THAT'LL COME IN HANDY."),
-							new Message('I CAN USE THAT'),
-							new Message('OKAY.'),
-							new Message('GOOD.')
-						].rnd())
+					if(Game.player.inventory.hasFreeSlotFor(Item.all[Game.currentInterest.unit.subType])){
+						Game.player.inventory.addItem(Item.all[Game.currentInterest.unit.subType])
+						Game.currentInterest.unit = Units.EMPTY;
+						if(!w(3)) {
+							Game.setMessage([	
+								new Message('GOT IT!'),
+								new Message('THAT WILL BE USEFUL'),
+								new Message('MIGHT BE USEFUL'),
+								new Message("THAT'LL COME IN HANDY."),
+								new Message('I CAN USE THAT'),
+								new Message('OKAY.'),
+								new Message('GOOD.')
+							].rnd())
+						}else{
+							Game.dialog.reset()
+						}							
 					}else{
-						Game.dialog.reset()
-					}				
-				}else if(Game.currentInterest.unit.canBeDiggedUp()){
-					// DIG UP current interest									
-					Game.search.start(Game.currentInterest.unit, function(){
-						var newUnit = Game.currentInterest.unit.digUp()
-						Game.currentInterest.unit = newUnit;
-						Game.search.unit = newUnit;
-						Game.dialog.reset();
-						Game.setMessageByField(Game.currentInterest);							
-					}, "WHAT HAVE WE HERE?");					
+						Game.setMessage(new Message("I CAN'T CARRY ANY MORE."));
+					}
+				}else if(Game.currentInterest.unit.isSearchable()){					
+					Game.currentInterest.unit.search();											
 				}else{			
 					Game.dialog.reset();
 				}
@@ -832,21 +1353,42 @@ function start(){
 			}
 		} else if(code == KeyCode.X){
 			pressKey(KeyCode.X)			
-			if(Game.dialog.message) {
+
+			if(Game.looting.pickUpInProgress){
+				Game.stopLootingToInventory() 	
+			}else if(Game.dialog.message) {
 				Game.dialog.reset();
+			}else if(Game.inventoryVisible){
+				Game.hideInventory();				
+			}else if(Game.looting.showDialog){
+				Game.hideLootingDialog()
+			}else if(Game.campFireBuildingMode){
+				Game.stopCampFireBuildingMode();					
 			}else{
-				var messages = [					
-					new Message("AM I THE LAST ONE ALIVE?\nNO _ THAT CAN'T BE _"),					
-					new Message("THERE MUST BE SOME SHELTER.\nSOMEWHERE."),					
-					new Message("HUNGRY, THIRSTY, COLD _ ALIVE."),					
-					new Message("_"),
-					new Message("I WILL SURVIVE THAT DAY.\nAND THE NEXT ONE _ I MUST!"),
-					new Message("ONE STEP, THEN THE NEXT.\nTHEN THE NEXT _")
-				]
-				
-				messages.push(new Message("THAT WIND IS GETTING STRONGER.\nI SHOULD FIND SOME SHELTER SOON."))			
-				messages.push(new Message("_ SO FREEZING COLD _"))
-				messages.push(new Message("IF ONLY THAT WIND WOULD DROP!"))			
+				var messages = []
+			
+				if(Game.player.status.hunger < Game.player.status.hungerThresholds[0] && Game.player.status.thirst < Game.player.status.thirstThresholds[0]  && Game.player.status.temperature < Game.player.status.temperatureThresholds[0] ){
+					messages = messages.concat([					
+						new Message("AM I THE LAST ONE ALIVE?\nNO _ THAT CAN'T BE _"),					
+						new Message("THERE MUST BE SOME SHELTER.\nSOMEWHERE."),					
+						new Message("HUNGRY, THIRSTY, COLD _ ALIVE."),					
+						new Message("_"),
+						new Message("I WILL SURVIVE THAT DAY.\nAND THE NEXT ONE _ I MUST!"),
+						new Message("ONE STEP, THEN THE NEXT.\nTHEN THE NEXT _")
+					])
+					
+					messages.push(new Message("THAT WIND IS GETTING STRONGER.\nI SHOULD FIND SOME SHELTER SOON."))			
+					messages.push(new Message("_ SO FREEZING COLD _"))
+					messages.push(new Message("IF ONLY THAT WIND WOULD DROP!"))			
+				}else{
+					var stats = [];
+					
+					if(Game.player.status.hunger >= Game.player.status.hungerThresholds[0]){stats.push("HUNGRY")}
+					if(Game.player.status.thirst >= Game.player.status.thirstThresholds[0]){stats.push("THIRSTY")}
+					if(Game.player.status.temperature >= Game.player.status.temperatureThresholds[0]){stats.push("COLD")}
+					
+					messages.push(new Message("I'M "+stats.join(", ")+"\nBUT AT LEAST I'M ALIVE."))
+				}
 				
 				var houseNear = false;
 				for(var ys=-8; ys<9 && !houseNear; ys++){
@@ -862,16 +1404,6 @@ function start(){
 					messages.push(new Message("THERE MIGHT BE SOME SUPPLIES LEFT\nIN THERE."))
 				}
 				Game.dialog.message = messages.rnd()
-			}
-		}
-		
-		if(arrayContains(code,[37,38,39,40]) && moved){
-			var r = w(10);
-			if(r==0) {
-				snowStorm = Math.min(1.3, snowStorm+0.1)				
-			}
-			if(r==1) {
-				snowStorm = Math.max(5, snowStorm-0.1)				
 			}
 		}		
 	}
@@ -909,6 +1441,8 @@ function start(){
 		var x = w(MAP_WIDTH);
 		var y = w(MAP_HEIGHT);
 		var field = map.get(x,y)		
+		
+		if(x<=10 && x+8>=10 || y<=10 && y+10 >= 10) continue		
 		
 		var skip = false;
 		// do not spawn a house in a house				
@@ -969,7 +1503,7 @@ function start(){
 				if(arrayContains(field.type,[40,7,70])) continue;
 				if(field.type != 0) continue;
 				if(w(6)) field.type = [2,3,4,5].rnd();
-				else if(!w(3)) field.type = 6
+				else if(!w(3)) field.type = [6,61,62,63,64].rnd()
 			}			
 		}				
 	}
@@ -1039,11 +1573,11 @@ function start(){
 	}		
 	
 	// items
-	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.005); i++){
+	for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
 		var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT))
 		if(field.type != 0) continue;
 		
-		field.unit = Units.item.twig();				
+		field.unit = Units.item.small_branch();				
 	}
 	
 	// hidden items
@@ -1055,6 +1589,7 @@ function start(){
 	}
 	
 	map.get(10,10).type = 0
+	map.get(10,10).unit = Units.EMPTY
 	
 	mapDrawer = new MapDrawer(mapCanvas.getContext("2d"), map, stepManager)
 	
@@ -1081,7 +1616,11 @@ var KeyCode = {
 	UP : 38,
 	RIGHT : 39,
 	DOWN : 40,
-	C : 67,
+	C : 67,	
+	D : 68,	
+	I : 73,
+	N : 78,
+	S : 83,
 	X : 88,	
 }
 
@@ -1091,6 +1630,14 @@ function Option(key,text,action){
 		return "("+key+") "+text;
 	}
 	this.action = action;
+}
+
+function drawButton(x,y,text){
+	overlayCtx.fillStyle = "#21262b"
+	overlayCtx.fillRect(x,y+8,text.length*5*4,32+16)
+	overlayCtx.fillStyle = "#e0f0f0"
+	overlayCtx.fillRect(x+4,y+8+4,text.length*5*4-8,32+16-8)
+	textPainter.drawText(text,overlayCtx,x+16,y+18);	
 }
 
 function Message(text,option){
@@ -1118,14 +1665,16 @@ var lastTime = 0;
 var stepTime = 50;
 var lastAnimationTime = 0;
 var animationStepTime = 250;
-function tick(time){	
+function tick(time){		
 	Game.time = time;
+	Game.update();
 	if(time-lastTime > stepTime){
 		lastTime = time;			
 		mapDrawer.draw();					
 	}			
 	if(time-lastAnimationTime > animationStepTime){
 		lastAnimationTime = time;	
+		AnimatedSprite.all.CAMP_FIRE.tick();
 		AnimatedSprite.all.PLAYER_CHAR_MAN.tick()		
 		AnimatedSprite.all.PLAYER_CHAR_MAN_LEFT.tick()		
 		AnimatedSprite.all.PLAYER_CHAR_MAN_BACK.tick()		
@@ -1136,111 +1685,267 @@ function tick(time){
 		Game.player.move();
 	}		
 	
-	// diagonal movement
-	if((keysDown[KeyCode.LEFT] || keysDown[KeyCode.RIGHT]) && (keysDown[KeyCode.UP] ||  keysDown[KeyCode.DOWN])){		
-		var direction;
-		if(keysDown[KeyCode.LEFT] && keysDown[KeyCode.UP]) {
-			direction = p(-1,-1)				
-		}else if(keysDown[KeyCode.LEFT] && keysDown[KeyCode.DOWN]) {
-			direction = p(-1,1)				
-		}else if(keysDown[KeyCode.RIGHT] && keysDown[KeyCode.UP]) {
-			direction = p(1,-1)				
-		}else{
-			direction = p(1,1)				
-		}
-		
-		if(Game.dialog.message){
-			Game.dialog.reset();				
-		}	
-		Game.setMessageByField(map.get(Game.player.position.x+direction.x,Game.player.position.y+direction.y));			
-		
-		
-		if(!Game.isPassable(Game.player.position.x+direction.x,Game.player.position.y+direction.y)){
-			if(Game.isPassable(Game.player.position.x,Game.player.position.y+direction.y)){
-				direction.x = 0
+	overlayCtx.clearRect(0,0,WIDTH,HEIGHT);
+	
+	if(!Game.inventoryVisible && !Game.campFireBuildingMode && !Game.looting.showDialog){
+		// diagonal movement
+		if((keysDown[KeyCode.LEFT] || keysDown[KeyCode.RIGHT]) && (keysDown[KeyCode.UP] ||  keysDown[KeyCode.DOWN])){		
+			var direction;
+			if(keysDown[KeyCode.LEFT] && keysDown[KeyCode.UP]) {
+				direction = p(-1,-1)				
+			}else if(keysDown[KeyCode.LEFT] && keysDown[KeyCode.DOWN]) {
+				direction = p(-1,1)				
+			}else if(keysDown[KeyCode.RIGHT] && keysDown[KeyCode.UP]) {
+				direction = p(1,-1)				
 			}else{
-				direction.y = 0
+				direction = p(1,1)				
 			}
-		}
-		
-		if(Game.isPassable(Game.player.position.x+direction.x,Game.player.position.y+direction.y)){
-			map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
-			Game.player.startMoving(direction)
-		}
-	} else if(!Game.player.moving){
-		if(keysDown[KeyCode.LEFT] && !Game.player.moving){		
-			if(Game.isPassable(Game.player.position.x-1,Game.player.position.y)){
-				if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x+1,Game.player.position.y).steps){
-					map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+			
+			if(Game.dialog.message){
+				Game.dialog.reset();				
+			}	
+			Game.setMessageByField(Game.getPlayerOnMap(direction));			
+						
+			if(!Game.isPassable(Game.player.position.x+direction.x,Game.player.position.y+direction.y)){
+				if(Game.isPassable(Game.player.position.x,Game.player.position.y+direction.y)){
+					direction.x = 0
 				}else{
-					map.get(Game.player.position.x,Game.player.position.y).steps = "fromRight";
+					direction.y = 0
 				}
-				Game.player.startMoving(p(-1,0))
-				Game.dialog.reset();		
-				Game.setMessageByField(map.get(Game.player.position.x-1,Game.player.position.y));					
-			}else {
-				if(Game.dialog.message){
-					Game.dialog.reset();				
-				}	
-				Game.setMessageByField(map.get(Game.player.position.x-1,Game.player.position.y));			
+				var field = Game.getPlayerOnMap(direction)
+				if(Game.hasMessageToSet(field)) Game.setMessageByField(field);			
 			}
-		} else if(keysDown[KeyCode.RIGHT] && !Game.player.moving){		
-			if(Game.isPassable(Game.player.position.x+1,Game.player.position.y)){
-				if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x-1,Game.player.position.y).steps){
-					map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
-				}else{
-					map.get(Game.player.position.x,Game.player.position.y).steps = "fromLeft";
-				}
-				Game.player.startMoving(p(1,0))
-				Game.dialog.reset();				
-				Game.setMessageByField(map.get(Game.player.position.x+1,Game.player.position.y));	
-			}else {
-				if(Game.dialog.message){
-					Game.dialog.reset();				
-				}	
-				Game.setMessageByField(map.get(Game.player.position.x+1,Game.player.position.y));			
-			}		
-		} else if(keysDown[KeyCode.UP] && !Game.player.moving){		
-			if(Game.isPassable(Game.player.position.x,Game.player.position.y-1)){
-				if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x,Game.player.position.y+1).steps){
-					map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
-				}else{
-					map.get(Game.player.position.x,Game.player.position.y).steps = "fromDown";
-				}
-				Game.player.startMoving(p(0,-1))
-				Game.dialog.reset();				
-				Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y-1));
-			}else {
-				if(Game.dialog.message){
-					Game.dialog.reset();				
-				}	
-				Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y-1));			
-			}		
-		} else if(keysDown[KeyCode.DOWN] && !Game.player.moving){		
-			if(Game.isPassable(Game.player.position.x,Game.player.position.y+1)){
-				if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x,Game.player.position.y-1).steps){
-					map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
-				}else{
-					map.get(Game.player.position.x,Game.player.position.y).steps = "fromUp";
-				}
-				Game.player.startMoving(p(0,1))
-				Game.dialog.reset();				
-				Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y+1));
-			}else {
-				if(Game.dialog.message){
-					Game.dialog.reset();				
-				}	
-				Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y+1));			
+			
+			if(Game.isPassable(Game.player.position.x+direction.x,Game.player.position.y+direction.y)){
+				map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+				Game.player.startMoving(direction)
+				if(Game.search.isSearching()) Game.search.cancel()
 			}
-		}
-	}	
+		} else if(!Game.player.moving){
+			if(keysDown[KeyCode.LEFT] && !Game.player.moving){		
+				if(Game.isPassable(Game.player.position.x-1,Game.player.position.y)){
+					if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x+1,Game.player.position.y).steps){
+						map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+					}else{
+						map.get(Game.player.position.x,Game.player.position.y).steps = "fromRight";
+					}
+					Game.player.startMoving(p(-1,0))
+					if(Game.search.isSearching()) Game.search.cancel()
+					Game.dialog.reset();		
+					Game.setMessageByField(map.get(Game.player.position.x-1,Game.player.position.y));										
+				}else {					
+					if(Game.dialog.message){
+						Game.dialog.reset();				
+					}	
+					Game.setMessageByField(map.get(Game.player.position.x-1,Game.player.position.y));			
+				}
+			} else if(keysDown[KeyCode.RIGHT] && !Game.player.moving){		
+				if(Game.isPassable(Game.player.position.x+1,Game.player.position.y)){
+					if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x-1,Game.player.position.y).steps){
+						map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+					}else{
+						map.get(Game.player.position.x,Game.player.position.y).steps = "fromLeft";
+					}
+					Game.player.startMoving(p(1,0))
+					if(Game.search.isSearching()) Game.search.cancel()
+					Game.dialog.reset();				
+					Game.setMessageByField(map.get(Game.player.position.x+1,Game.player.position.y));	
+				}else {
+					if(Game.dialog.message){
+						Game.dialog.reset();				
+					}	
+					Game.setMessageByField(map.get(Game.player.position.x+1,Game.player.position.y));			
+				}		
+			} else if(keysDown[KeyCode.UP] && !Game.player.moving){		
+				if(Game.isPassable(Game.player.position.x,Game.player.position.y-1)){
+					if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x,Game.player.position.y+1).steps){
+						map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+					}else{
+						map.get(Game.player.position.x,Game.player.position.y).steps = "fromDown";
+					}
+					Game.player.startMoving(p(0,-1))
+					if(Game.search.isSearching()) Game.search.cancel()
+					Game.dialog.reset();				
+					Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y-1));
+				}else {
+					if(Game.dialog.message){
+						Game.dialog.reset();				
+					}	
+					Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y-1));			
+				}		
+			} else if(keysDown[KeyCode.DOWN] && !Game.player.moving){		
+				if(Game.isPassable(Game.player.position.x,Game.player.position.y+1)){
+					if(map.get(Game.player.position.x,Game.player.position.y).steps || !map.get(Game.player.position.x,Game.player.position.y-1).steps){
+						map.get(Game.player.position.x,Game.player.position.y).steps = "steps";
+					}else{
+						map.get(Game.player.position.x,Game.player.position.y).steps = "fromUp";
+					}
+					Game.player.startMoving(p(0,1))
+					if(Game.search.isSearching()) Game.search.cancel()
+					Game.dialog.reset();				
+					Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y+1));
+				}else {
+					if(Game.dialog.message){
+						Game.dialog.reset();				
+					}	
+					Game.setMessageByField(map.get(Game.player.position.x,Game.player.position.y+1));			
+				}
+			}
+		}	
+	}
 		
 	Game.search.update(time)
 	if(Game.search.isSearching()){	
 		var n = Game.search.searchTime - Game.search.searchTimeToDo + 1 	
 		Game.setMessage(new Message(Game.search.message+"\n\n\n"+" ".repeat(Math.floor(Game.search.searchTime/3))+"["+"I".repeat(n)+".".repeat(Game.search.searchTimeToDo-1)+"]"),true)		
 	}
+	
+	if(Game.looting.showDialog){
+		overlayCtx.clearRect(0,0,WIDTH,HEIGHT)
 		
+		var bag = p(32*3+10,6*32)
+
+		overlayCtx.drawImage(sprites,28,64,38,54,bag.x-16,bag.y-16,38*4,54*4)		
+		for(var i=0; i<Game.player.inventory.size();i++){
+			var item = Game.player.inventory.getSlot(i).item;				
+			if(item.id == 'nothing') continue
+			item.drawOn(overlayCtx,box(bag.x+(i%2)*64+12,bag.y+64*(Math.floor(i/2))+12,32,32))			
+			
+			overlayCtx.drawImage(sprites,0,78,11,9,bag.x+(i%2)*64+(i%2 ? (+13*4) : (-10*4)),bag.y+64*(Math.floor(i/2))+12,11*4,9*4)
+			var num = " "+Game.player.inventory.getSlot(i).stackSize;
+			num = num.substr(num.length-2,2)
+			
+			textPainter.drawText(num,overlayCtx,1*4+bag.x+(i%2)*64+(i%2 ? (+12*4) : (-10*4)),1*4+bag.y+64*(Math.floor(i/2))+12);
+			
+		}
+		
+		bag = p(32*13+10,6*32)
+		
+		overlayCtx.drawImage(sprites,28,64,38,54,bag.x-16,bag.y-16,38*4,54*4)		
+		for(var i=0; i<Game.looting.unit.inventory.size();i++){
+			var item = Game.looting.unit.inventory.getSlot(i).item;	
+			if(i == Game.selectedInventorySlot) overlayCtx.drawImage(sprites,0,64,14,14,bag.x+(i%2)*64,bag.y+64*(Math.floor(i/2)),14*4,14*4)		
+			if(item.id == 'nothing') continue
+			item.drawOn(overlayCtx,box(bag.x+(i%2)*64+12,bag.y+64*(Math.floor(i/2))+12,32,32))		
+			
+			overlayCtx.drawImage(sprites,0,78,11,9,bag.x+(i%2)*64+(i%2 ? (+13*4) : (-10*4)),bag.y+64*(Math.floor(i/2))+12,11*4,9*4)
+			var num = " "+Game.looting.unit.inventory.getSlot(i).stackSize;
+			num = num.substr(num.length-2,2)
+			
+			textPainter.drawText(num,overlayCtx,1*4+bag.x+(i%2)*64+(i%2 ? (+13*4) : (-10*4)),1*4+bag.y+64*(Math.floor(i/2))+12);
+			
+		}
+		
+		overlayCtx.fillStyle = "#21262b"
+		overlayCtx.fillRect(0,13*32-5-1*4,WIDTH,100)
+		overlayCtx.fillStyle = "#e0f0f0"
+		overlayCtx.fillRect(0,13*32-5,WIDTH,100- 2*4)
+		
+		var slot = Game.looting.unit.inventory.getSlot(Game.selectedInventorySlot)
+		if(Game.looting.pickUpInProgress){
+			var message = "I THINK I WILL TAKE _";
+			textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),13*32+10);
+			var message = "< "+Game.looting.currentPickUpNumber+" >";
+			textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),14*32+14);			
+		}else{					
+			var message = slot.getText();				
+			textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),13*32+10);
+		}
+		
+		if(Game.looting.pickUpInProgress) {
+			drawButton(32*2,16*32,'(X) CANCEL');
+		}else{
+			drawButton(32*2,16*32,'(X) CLOSE');
+		}
+		if(slot.item.id != Item.all.nothing.id && (!Game.looting.pickUpInProgress || Game.looting.currentPickUpNumber != 0)) drawButton(32*12,16*32,'(C) PICK UP');
+	}
+	
+	if(Game.inventoryVisible){		
+
+		var symbols = [box(3,129,7,12),box(10,129,8,12),box(18,129,8,12)]
+		var values = [[Game.player.status.thirst,Game.player.status.thirstThresholds],[Game.player.status.hunger,Game.player.status.hungerThresholds],[Game.player.status.temperature,Game.player.status.temperatureThresholds]]
+		for(var n=0; n<3; n++){
+			var shift = n*58*4;
+			var symbol = symbols[n]
+			var data = values[n]
+			overlayCtx.drawImage(sprites,0,129,3,12,shift,0,3*4,12*4)		
+			shift += 3*4;
+			overlayCtx.drawImage(sprites,symbol.x,symbol.y,symbol.width,symbol.height,shift,0,symbol.width*4,symbol.height*4)
+			shift += symbol.width*4;		
+			var scaleShiftStart = shift;
+			var scaleShift = scaleShiftStart+30*4;
+			overlayCtx.drawImage(sprites,2,129,1,12,shift,0,38*4,12*4)		
+			shift += 38*4;		
+			overlayCtx.drawImage(sprites,44,129,3,12,shift,0,3*4,12*4)
+					
+			var severity = 0;
+			if(data[0] >= data[1][0]){
+				if(data[0] < data[1][1]){
+					overlayCtx.drawImage(sprites,26,129,3,12,scaleShift+3*4,0,3*4,12*4)		
+				}else if(data[0] < data[1][2]){
+					overlayCtx.drawImage(sprites,29,129,7,12,scaleShift+1*4,0,7*4,12*4)		
+					severity = 1;
+				}else{
+					overlayCtx.drawImage(sprites,36,129,9,12,scaleShift-1*4,0,9*4,12*4)		
+					severity = 2;
+				}			
+			}		
+			
+			for(var i=0; i<Math.floor(data[0] * 25 /data[1][3]); i++){
+				overlayCtx.drawImage(sprites,severity*2,93,2,4,scaleShiftStart+(2+i)*4,4*4,2*4,4*4)
+			}
+			overlayCtx.drawImage(sprites,0,87,27,6,scaleShiftStart+1*4,3*4,27*4,6*4)				
+		}
+		
+	
+		var bag = p(32*3+10,6*32)
+
+		overlayCtx.drawImage(sprites,28,64,38,54,bag.x-16,bag.y-16,38*4,54*4)		
+		for(var i=0; i<Game.player.inventory.size();i++){
+			var item = Game.player.inventory.getSlot(i).item;	
+			if(i == Game.selectedInventorySlot) overlayCtx.drawImage(sprites,0,64,14,14,bag.x+(i%2)*64,bag.y+64*(Math.floor(i/2)),14*4,14*4)		
+			if(item.id == 'nothing') continue
+			item.drawOn(overlayCtx,box(bag.x+(i%2)*64+12,bag.y+64*(Math.floor(i/2))+12,32,32))
+			
+			overlayCtx.drawImage(sprites,0,78,11,9,bag.x+(i%2)*64+(i%2 ? (+13*4) : (-10*4)),bag.y+64*(Math.floor(i/2))+12,11*4,9*4)
+			var num = " "+Game.player.inventory.getSlot(i).stackSize;
+			num = num.substr(num.length-2,2)
+			
+			textPainter.drawText(num,overlayCtx,1*4+bag.x+(i%2)*64+(i%2 ? (+13*4) : (-10*4)),1*4+bag.y+64*(Math.floor(i/2))+12);
+		}
+		
+		overlayCtx.fillStyle = "#21262b"
+		overlayCtx.fillRect(0,13*32-5-1*4,WIDTH,100)
+		overlayCtx.fillStyle = "#e0f0f0"
+		overlayCtx.fillRect(0,13*32-5,WIDTH,100- 2*4)
+		
+		var slot = Game.player.inventory.getSlot(Game.selectedInventorySlot);
+		var message = slot.getText();		
+		textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),13*32+10);
+		
+		drawButton(32*2-16,16*32,'(I,X) CLOSE');
+		if(slot.item != Item.all.nothing) drawButton(32*9,16*32,'(D) DROP');
+		if(slot.item.canBeUsed()){
+			drawButton(32*14+16,16*32,'(C) USE');
+		}
+		if(Game.canStartCampFire()) drawButton(32*4,18*32,'(S) START CAMP FIRE');		
+	}
+	
+	if(Game.campFireBuildingMode){		
+		var campFireField = Game.getPlayerOnMap(Game.campFireBuildingMode);
+		
+		overlayCtx.globalAlpha = 0.65;
+		if(Game.canBuildCampFire(campFireField)){
+			overlayCtx.drawImage(sprites,Type.camp_fire_build.x*8,Type.camp_fire_build.y*8,8,8,(10+Game.campFireBuildingMode.x)*32,(10+Game.campFireBuildingMode.y)*32,32,32)
+		}else{
+			overlayCtx.drawImage(sprites,Type.camp_fire_impossible.x*8,Type.camp_fire_build.y*8,8,8,(10+Game.campFireBuildingMode.x)*32,(10+Game.campFireBuildingMode.y)*32,32,32)
+		}
+		overlayCtx.globalAlpha = 1;
+		
+		drawButton(32*7+16,15*32,'(X) CANCEL');
+		drawButton(32*5,13*32,'(S) BUILD CAMP FIRE');
+	}
+	
 	if(Game.dialog.message){	
 
 		if(Game.dialog.message.hasText()){
@@ -1249,7 +1954,7 @@ function tick(time){
 			overlayCtx.fillStyle = "#e0f0f0"
 			overlayCtx.fillRect(0,13*32-5,WIDTH,100- 2*4)
 		
-			overlayCtx.drawImage(sprites,types.speak.x*8,types.speak.y*8,8,8,10*32,12*32-1*5,32,32)
+			overlayCtx.drawImage(sprites,Type.speak.x*8,Type.speak.y*8,8,8,10*32,12*32-1*5,32,32)
 			var textLines = Game.dialog.message.getLines();
 			for(var i=0; i<textLines.length;i++){
 				var message = textLines[i]
@@ -1280,6 +1985,55 @@ function tick(time){
 		}
 	}
 	
+	if(!Game.inventoryVisible && (Game.player.status.thirst >= Game.player.status.thirstThresholds[0] || Game.player.status.hunger >= Game.player.status.hungerThresholds[0] || Game.player.status.temperature >= Game.player.status.temperatureThresholds[0])){		
+		overlayCtx.drawImage(sprites,0,129,3,12,0,0,3*4,12*4)		
+		var shift = 3*4;
+		if(Game.player.status.thirst >= Game.player.status.thirstThresholds[0] ){
+			overlayCtx.drawImage(sprites,3,129,7,12,shift,0,7*4,12*4)		
+			shift += 7*4;
+			if(Game.player.status.thirst < Game.player.status.thirstThresholds[1]){
+				overlayCtx.drawImage(sprites,26,129,3,12,shift,0,3*4,12*4)		
+				shift += 3*4;
+			}else if(Game.player.status.thirst < Game.player.status.thirstThresholds[2]){
+				overlayCtx.drawImage(sprites,29,129,7,12,shift,0,7*4,12*4)		
+				shift += 7*4;
+			}else{
+				overlayCtx.drawImage(sprites,36,129,9,12,shift,0,9*4,12*4)		
+				shift += 9*4;
+			}
+		}
+		if(Game.player.status.hunger >= Game.player.status.hungerThresholds[0] ){
+			overlayCtx.drawImage(sprites,10,129,8,12,shift,0,8*4,12*4)		
+			shift += 8*4;
+			if(Game.player.status.hunger < Game.player.status.hungerThresholds[1]){
+				overlayCtx.drawImage(sprites,26,129,3,12,shift,0,3*4,12*4)		
+				shift += 3*4;
+			}else if(Game.player.status.hunger < Game.player.status.hungerThresholds[2]){
+				overlayCtx.drawImage(sprites,29,129,7,12,shift,0,7*4,12*4)		
+				shift += 7*4;
+			}else{
+				overlayCtx.drawImage(sprites,36,129,9,12,shift,0,9*4,12*4)		
+				shift += 9*4;
+			}
+		}
+		if(Game.player.status.temperature >= Game.player.status.temperatureThresholds[0] ){
+			overlayCtx.drawImage(sprites,18,129,8,12,shift,0,8*4,12*4)		
+			shift += 8*4;
+			if(Game.player.status.temperature < Game.player.status.temperatureThresholds[1]){
+				overlayCtx.drawImage(sprites,26,129,3,12,shift,0,3*4,12*4)		
+				shift += 3*4;
+			}else if(Game.player.status.temperature < Game.player.status.temperatureThresholds[2]){
+				overlayCtx.drawImage(sprites,29,129,7,12,shift,0,7*4,12*4)		
+				shift += 7*4;
+			}else{
+				overlayCtx.drawImage(sprites,36,129,9,12,shift,0,9*4,12*4)		
+				shift += 9*4;
+			}
+		}
+		overlayCtx.drawImage(sprites,44,129,3,12,shift,0,3*4,12*4)		
+		
+	}
+	
 	ctx.drawImage(mapCanvas,0,0)
 	ctx.globalAlpha = 0.05;	
 	ctx.drawImage(crissleCanvas,0,0)
@@ -1307,8 +2061,10 @@ canvas {
 </style>
 </head>
 <body onload="start()" style="text-align:center;background-color:white">
-<pre style="color:black">
-arrow keys ------- move character
-x ------------ talk / cancel talk
-</pre>
+<pre id="instructions" style="color:grey">
+arrow keys ------- move character              
+x ---------------- random talk / cancel dialogs
+c ---------------- action (depends)            
+i ---------------- inventory                   
+</pre></div>
 </body></html>
