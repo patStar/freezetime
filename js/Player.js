@@ -42,15 +42,13 @@ function Player() {
             this.movement.move();
         }
 
-        console.log(1);
-
         var keyMoveMap = {};
         keyMoveMap[KeyCode.LEFT]    = "W";
         keyMoveMap[KeyCode.RIGHT]   = "E";
         keyMoveMap[KeyCode.UP]      = "N";
         keyMoveMap[KeyCode.DOWN]    = "S";
 
-        if (!this.movement.moving && !Game.currentScreen && this.status.isAlive()) {
+        if (!this.movement.moving && this.status.isAlive()) {
             // diagonal movement
             if ((inputListener.isKeyDown(KeyCode.LEFT) || inputListener.isKeyDown(KeyCode.RIGHT)) && (inputListener.isKeyDown(KeyCode.UP) || inputListener.isKeyDown(KeyCode.DOWN))) {
                 var fieldDirection;
@@ -69,20 +67,27 @@ function Player() {
                 }
                 Game.setMessageByField(Game.getPlayerOnMap(fieldDirection));
 
-                if (!Game.getPlayerOnMap(fieldDirection).isPassable() && (Game.getPlayerOnMap(p(fieldDirection.x, 0)).isPassable() || Game.getPlayerOnMap(p(0, fieldDirection.y)).isPassable())) {
-                    if (Game.isPassable(this.movement.position.x, this.movement.position.y + fieldDirection.y)) {
-                        direction = p(0, fieldDirection.y)
-                    } else if (Game.isPassable(this.movement.position.x + fieldDirection.x, this.movement.position.y)) {
-                        direction = p(fieldDirection.x, 0)
-                    }
-                    var field = Game.getPlayerOnMap(fieldDirection);
-                    if (Game.hasMessageToSet(field)) Game.setMessageByField(field);
-                }
+                var playerCanMoveToTarget = Game.isPassable(this.movement.position.x + fieldDirection.x, this.movement.position.y + fieldDirection.y);
+                var playerIsBlockedButCanMove = !Game.getPlayerOnMap(fieldDirection).isPassable() && (Game.getPlayerOnMap(p(fieldDirection.x, 0)).isPassable() || Game.getPlayerOnMap(p(0, fieldDirection.y)).isPassable());
 
-                if (Game.isPassable(this.movement.position.x + fieldDirection.x, this.movement.position.y + fieldDirection.y)) {
+                if (playerCanMoveToTarget) {
                     map.get(this.movement.position.x, this.movement.position.y).steps = "steps";
                     this.movement.startMoving(fieldDirection);
                     if (Game.search.isSearching()) Game.search.cancel()
+                } else if (playerIsBlockedButCanMove) {
+
+                    var playerCanMoveVerticaly = Game.isPassable(this.movement.position.x, this.movement.position.y + fieldDirection.y);
+                    var playerCanMoveHorizontaly = Game.isPassable(this.movement.position.x + fieldDirection.x, this.movement.position.y);
+
+                    if (playerCanMoveVerticaly) {
+                        direction = p(0, fieldDirection.y)
+                    } else if (playerCanMoveHorizontaly) {
+                        direction = p(fieldDirection.x, 0)
+                    }
+
+                    var field = Game.getPlayerOnMap(fieldDirection);
+                    if (Game.hasMessageToSet(field)) Game.setMessageByField(field);
+                    this.movement.startMoving(direction);
                 }
             } else {
                 for (var key of [KeyCode.LEFT, KeyCode.RIGHT, KeyCode.UP, KeyCode.DOWN])

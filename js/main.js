@@ -532,7 +532,7 @@ function start(){
     map = new Map(MAP_WIDTH,MAP_HEIGHT);
 
     // grass
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
+    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*GRASS_PROBABILITY); i++){
         var x = w(MAP_WIDTH);
         var y = w(MAP_HEIGHT);
 
@@ -547,14 +547,14 @@ function start(){
     }
 
     // stones
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.007); i++){
+    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*STONE_PROBABILITY); i++){
         var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT));
         field.unit = Units.STONE;
         field.type = 8
     }
 
     // huts
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.0005); i++){
+    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*HUT_PROBABILITY); i++){
         var x = w(MAP_WIDTH);
         var y = w(MAP_HEIGHT);
         var field = map.get(x,y);
@@ -614,7 +614,7 @@ function start(){
     }
 
     // corpse
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.0001); i++){
+    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*CORPSE_PROBABILITY); i++){
         var x = w(MAP_WIDTH);
         var y = w(MAP_HEIGHT);
         var field = map.get(x,y);
@@ -629,7 +629,7 @@ function start(){
     }
 
     // wood
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
+    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*WOOD_PROBABILITY); i++){
         var x = w(MAP_WIDTH);
         var y = w(MAP_HEIGHT);
 
@@ -648,7 +648,7 @@ function start(){
     }
 
     // lake
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
+    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*LAKE_PROBABILITY); i++){
         var x = w(MAP_WIDTH);
         var y = w(MAP_HEIGHT);
 
@@ -713,7 +713,7 @@ function start(){
     }
 
     // items
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.01); i++){
+    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*ITEM_PROBABILITY); i++){
         var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT));
         if(field.type != 0) continue;
 
@@ -721,7 +721,7 @@ function start(){
     }
 
     // hidden items
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*0.0005); i++){
+    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*HIDDEN_ITEM_PROBABILITY); i++){
         var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT));
         if(field.type != 0) continue;
 
@@ -742,9 +742,11 @@ function start(){
 
     inputListener.registerClient(mapDrawer);
 
+    var conditionPanel = new ConditionPanel(sprites);
+
     Game.screens.default = new MapScreen(inputListener, mapDrawer);
-    Game.screens.indoor = new IndoorScreen(Game.ctx.overlay, messagePanel, inventoryBag);
-    Game.screens.inventory = new InventoryScreen(Game.ctx.overlay,messagePanel, inventoryBag);
+    Game.screens.indoor = new IndoorScreen(Game.ctx.overlay, messagePanel, inventoryBag, conditionPanel);
+    Game.screens.inventory = new InventoryScreen(Game.ctx.overlay,messagePanel, inventoryBag, conditionPanel);
     Game.screens.looting = new LootingScreen(Game.ctx.overlay,messagePanel,inventoryBag);
     Game.screens.campFire = new CampFireScreen(Game.ctx.overlay,messagePanel,Game.campFireManager);
     Game.screens.boilingWater = new BoilingWaterScreen(Game.ctx.overlay,messagePanel);
@@ -852,7 +854,7 @@ function drawConditionIcons(overlayCtx) {
 function tick(time){
 
     Game.time = time;
-    Game.update(inputListener);
+    Game.update();
 
     if(time-lastAnimationTime > animationStepTime){
         lastAnimationTime = time;
@@ -868,7 +870,7 @@ function tick(time){
     var overlayCtx = Game.ctx.overlay;
     overlayCtx.clearRect(0,0,WIDTH,HEIGHT);
 
-    Game.player.update();
+    Game.player.update(inputListener);
     Game.search.update(time);
     Game.drawCurrentScreen();
 

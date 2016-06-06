@@ -26,6 +26,8 @@ function p(x, y) {
     return {
         x: x, y: y, add: function (x, y) {
             return p(this.x + x, this.y + y)
+        }, addV: function (v) {
+            return p(this.x + v.x, this.y + v.y)
         }
     };
 }
