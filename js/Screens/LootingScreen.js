@@ -45,6 +45,7 @@ function LootingScreen(ctx, messagePanel, inventoryBag) {
 
     this.onKeyDown = function (key) {
         if (!this.visible) return;
+
         if (key == KeyCode.LEFT) {
             if (Game.looting.pickUpInProgress) {
                 Game.looting.currentPickUpNumber = Math.max(1, Game.looting.currentPickUpNumber - 1)

@@ -1,4 +1,4 @@
-function Diggable(unit, min, max, probability) {
+function Digable(unit, min, max, probability) {
     this.unit = unit;
     this.min = min;
     this.max = max;

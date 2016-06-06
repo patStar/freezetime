@@ -88,110 +88,123 @@ function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
     };
 
 
+    function handlePickupInProgress(key) {
+
+        if (key == KeyCode.LEFT) {
+            Game.looting.currentPickUpNumber = Math.max(1, Game.looting.currentPickUpNumber - 1)
+        } else if (key == KeyCode.RIGHT) {
+            var slot = Game.looting.sourceInventory.getSlot(Game.selectedInventorySlot);
+            var max = slot.stackSize;
+            var playerCanPickUpMore = Game.looting.targetInventory.hasSpaceLeft() || Game.looting.targetInventory.canBeStacked(slot.item, Math.min(max, Game.looting.currentPickUpNumber + 1));
+            if (playerCanPickUpMore) {
+                Game.looting.currentPickUpNumber = Math.min(max, Game.looting.currentPickUpNumber + 1);
+            }
+        } else if (key == KeyCode.X) {
+            Game.stopLooting();
+        } else if (key == KeyCode.C) {
+            if (Game.looting.currentPickUpNumber > 0) {
+                Game.looting.pickUp();
+                Game.stopLooting()
+            }
+        }
+    }
+
+    function handleLooting(key) {
+        if (key == KeyCode.LEFT) {
+            if (Game.selectedInventorySlot % 2) {
+                Game.selectedInventorySlot -= 1;
+            } else if (!(Game.selectedInventorySlot % 2) && this.side == 1) {
+                Game.selectedInventorySlot += 1;
+                this.side = 0;
+            }
+        } else if (key == KeyCode.RIGHT) {
+            if (!(Game.selectedInventorySlot % 2)) {
+                Game.selectedInventorySlot += 1;
+            } else if (Game.selectedInventorySlot % 2 && this.side == 0) {
+                Game.selectedInventorySlot -= 1;
+                this.side = 1;
+            }
+        } else if (key == KeyCode.UP) {
+            if (Game.selectedInventorySlot > 1) {
+                Game.selectedInventorySlot -= 2
+            }
+        } else if (key == KeyCode.DOWN) {
+            if (Game.selectedInventorySlot < 4) {
+                Game.selectedInventorySlot += 2
+            }
+        } else if (key == KeyCode.X) {
+            Game.hideLootingDialog();
+            this.side = 1;
+        } else if (key == KeyCode.C) {
+            if (this.side == 1 && Game.looting.unit.inventory.getSlot(Game.selectedInventorySlot).item != Item.all.nothing) {
+                Game.startLootingToInventory(Game.looting.unit.inventory, Game.player.inventory)
+            } else if (this.side == 0 && Game.player.inventory.getSlot(Game.selectedInventorySlot).item != Item.all.nothing) {
+                Game.startLootingToInventory(Game.player.inventory, Game.looting.unit.inventory)
+            }
+        }
+    }
+
+    function handleLookAround(key) {
+        var currentInterior = this.interior[this.currentlySelected];
+        var shift = 1;
+        if (key == KeyCode.LEFT) {
+            if (currentInterior.type == InteriorPiece.TYPE.smallTop) {
+                shift = 1;
+            } else if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
+                shift = 2;
+            }
+
+            if (this.interior[(this.interior.length + this.currentlySelected - shift) % this.interior.length].type == InteriorPiece.TYPE.smallBottom) {
+                shift = 2;
+            }
+
+            this.currentlySelected = (this.interior.length + this.currentlySelected - shift) % this.interior.length;
+        } else if (key == KeyCode.RIGHT) {
+            if (currentInterior.type == InteriorPiece.TYPE.smallTop) {
+                shift = 2;
+            } else if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
+                if (this.interior[(this.interior.length + this.currentlySelected + shift) % this.interior.length].type == InteriorPiece.TYPE.smallTop) {
+                    shift = 2;
+                } else {
+                    shift = 1;
+                }
+            }
+
+            this.currentlySelected = (this.currentlySelected + shift) % this.interior.length;
+        } else if (key == KeyCode.UP) {
+            if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
+                shift = 1;
+            } else {
+                shift = 0;
+            }
+            this.currentlySelected = (this.interior.length + this.currentlySelected - shift) % this.interior.length;
+        } else if (key == KeyCode.DOWN) {
+            if (currentInterior.type == InteriorPiece.TYPE.smallTop) {
+                shift = 1;
+            } else {
+                shift = 0;
+            }
+            this.currentlySelected = (this.currentlySelected + shift) % this.interior.length;
+        } else if (key == KeyCode.S) {
+            //this.initRoom()
+        } else if (key == KeyCode.C) {
+            currentInterior.interior.search();
+        } else if (key == KeyCode.X) {
+            Game.hideCurrentScreen();
+        }
+    }
+
     this.onKeyDown = function (key) {
         if (!this.visible) return;
 
         if (Game.looting.unit) {
-            if (key == KeyCode.LEFT) {
-                if (Game.looting.pickUpInProgress) {
-                    Game.looting.currentPickUpNumber = Math.max(1, Game.looting.currentPickUpNumber - 1)
-                } else if (Game.selectedInventorySlot % 2) {
-                    Game.selectedInventorySlot -= 1;
-                } else if (!(Game.selectedInventorySlot % 2) && this.side == 1) {
-                    Game.selectedInventorySlot += 1;
-                    this.side = 0;
-                }
-            } else if (key == KeyCode.RIGHT) {
-                if (Game.looting.pickUpInProgress) {
-                    var slot = Game.looting.sourceInventory.getSlot(Game.selectedInventorySlot);
-                    var max = slot.stackSize;
-                    var playerCanPickUpMore = Game.looting.targetInventory.hasSpaceLeft() || Game.looting.targetInventory.canBeStacked(slot.item, Math.min(max, Game.looting.currentPickUpNumber + 1));
-                    if (playerCanPickUpMore) {
-                        Game.looting.currentPickUpNumber = Math.min(max, Game.looting.currentPickUpNumber + 1)
-                    }
-                } else if (!(Game.selectedInventorySlot % 2)) {
-                    Game.selectedInventorySlot += 1;
-                } else if (Game.selectedInventorySlot % 2 && this.side == 0) {
-                    Game.selectedInventorySlot -= 1;
-                    this.side = 1;
-                }
-            } else if (key == KeyCode.UP) {
-                if (Game.selectedInventorySlot > 1) {
-                    Game.selectedInventorySlot -= 2
-                }
-            } else if (key == KeyCode.DOWN) {
-                if (Game.selectedInventorySlot < 4) {
-                    Game.selectedInventorySlot += 2
-                }
-            } else if (key == KeyCode.X) {
-                if (Game.looting.pickUpInProgress) {
-                    Game.stopLooting()
-                } else {
-                    Game.hideLootingDialog();
-                    this.side = 1;
-                }
-            } else if (key == KeyCode.C) {
-                if (Game.looting.pickUpInProgress) {
-                    if (Game.looting.currentPickUpNumber > 0) {
-                        Game.looting.pickUp();
-                        Game.stopLooting()
-                    }
-                } else {
-                    if (this.side == 1 && Game.looting.unit.inventory.getSlot(Game.selectedInventorySlot).item != Item.all.nothing) {
-                        Game.startLootingToInventory(Game.looting.unit.inventory, Game.player.inventory)
-                    } else if (this.side == 0 && Game.player.inventory.getSlot(Game.selectedInventorySlot).item != Item.all.nothing) {
-                        Game.startLootingToInventory(Game.player.inventory, Game.looting.unit.inventory)
-                    }
-                }
+            if (Game.looting.pickUpInProgress) {
+                handlePickupInProgress(key);
+            }else{
+                handleLooting.call(this, key);
             }
         } else {
-            var currentInterior = this.interior[this.currentlySelected];
-            var shift = 1;
-            if (key == KeyCode.LEFT) {
-                if (currentInterior.type == InteriorPiece.TYPE.smallTop) {
-                    shift = 1;
-                } else if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
-                    shift = 2;
-                }
-
-                if (this.interior[(this.interior.length + this.currentlySelected - shift) % this.interior.length].type == InteriorPiece.TYPE.smallBottom) {
-                    shift = 2;
-                }
-
-                this.currentlySelected = (this.interior.length + this.currentlySelected - shift) % this.interior.length;
-            } else if (key == KeyCode.RIGHT) {
-                if (currentInterior.type == InteriorPiece.TYPE.smallTop) {
-                    shift = 2;
-                } else if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
-                    if (this.interior[(this.interior.length + this.currentlySelected + shift) % this.interior.length].type == InteriorPiece.TYPE.smallTop) {
-                        shift = 2;
-                    } else {
-                        shift = 1;
-                    }
-                }
-
-                this.currentlySelected = (this.currentlySelected + shift) % this.interior.length;
-            } else if (key == KeyCode.UP) {
-                if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
-                    shift = 1;
-                } else {
-                    shift = 0;
-                }
-                this.currentlySelected = (this.interior.length + this.currentlySelected - shift) % this.interior.length;
-            } else if (key == KeyCode.DOWN) {
-                if (currentInterior.type == InteriorPiece.TYPE.smallTop) {
-                    shift = 1;
-                } else {
-                    shift = 0;
-                }
-                this.currentlySelected = (this.currentlySelected + shift) % this.interior.length;
-            } else if (key == KeyCode.S) {
-                //this.initRoom()
-            } else if (key == KeyCode.C) {
-                currentInterior.interior.search();
-            } else if (key == KeyCode.X) {
-                Game.hideCurrentScreen();
-            }
+            handleLookAround.call(this, key);
         }
     }
 }

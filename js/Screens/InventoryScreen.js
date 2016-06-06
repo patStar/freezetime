@@ -18,15 +18,16 @@ function InventoryScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
 
         inventoryBag.drawLeft(Game.player.inventory, ctx, true);
 
+        var message = null;
         if (Game.dropping.inProgress) {
-            var message = new Message("HOW MANY SHOULD I DROP?\n< " + Game.dropping.currentCount + " >");
+            message = new Message("HOW MANY SHOULD I DROP?\n< " + Game.dropping.currentCount + " >");
             messagePanel.drawOn(message, ctx);
 
             drawButton(ctx, 32 * 2 - 16, 16 * 32, '(X) CANCEL');
             drawButton(ctx, 32 * 9, 16 * 32, '(D) DROP');
         } else {
             var slot = Game.player.inventory.getSlot(Game.selectedInventorySlot);
-            var message = new Message(slot.getText());
+            message = new Message(slot.getText());
             messagePanel.drawOn(message, ctx);
 
             drawButton(ctx, 32 * 2 - 16, 16 * 32, '(I,X) CLOSE');

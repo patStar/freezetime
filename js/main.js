@@ -396,11 +396,11 @@ function start(){
     Units.addPickupItem('MISC STUFF','misc_stuff');
 
     Units.addDigUpItem(SubType.UNKNOWN_IN_THE_SNOW,['THERE IS SOMETHING BENEATH THE SNOW.'],3,6,[
-        new Diggable(Units.item.small_branch,2,3,10),
-        new Diggable(Units.corpse.elder_man,4,6,1),
-        new Diggable(Units.corpse.elder_women,4,6,1),
-        new Diggable(Units.corpse.man,4,6,1),
-        new Diggable(Units.corpse.women,4,6,1)]);
+        new Digable(Units.item.small_branch,2,3,10),
+        new Digable(Units.corpse.elder_man,4,6,1),
+        new Digable(Units.corpse.elder_women,4,6,1),
+        new Digable(Units.corpse.man,4,6,1),
+        new Digable(Units.corpse.women,4,6,1)]);
 
     Game.player = new Player();
     Game.player.inventory.reset();
