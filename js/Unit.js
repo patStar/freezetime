@@ -8,7 +8,7 @@ function Unit(type, subType, messages, lootable, minSearchTime, maxSearchTime, l
         return (lootable && this.searched) || false;
     };
     this.isSearchable = function () {
-        return lootable
+        return lootable && !this.searched;
     };
     this.canBePickedUp = function () {
         return false
@@ -24,7 +24,10 @@ function Unit(type, subType, messages, lootable, minSearchTime, maxSearchTime, l
     this.onClose = function () {
     };
     this.search = function () {
-        if (!this.searched) {
+        if (this.searched) {
+            Game.dialog.reset();
+            Game.showLootingDialog(this);
+        } else if(!Game.search.isSearching()){
             Game.search.start(this, function (unit) {
                 unit.searched = true;
                 for (var i = 0; i < minItems + w(maxItems - minItems); i++) {
@@ -37,9 +40,6 @@ function Unit(type, subType, messages, lootable, minSearchTime, maxSearchTime, l
                     Game.setMessage(new Message("NOTHING USEFUL HERE."));
                 }
             });
-        } else {
-            Game.dialog.reset();
-            Game.showLootingDialog(this);
         }
     };
     this.rollInventory = function () {

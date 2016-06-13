@@ -2,10 +2,11 @@
 
 var inputListener = new InputListener();
 var gameCanvas, gameView, ctx, map, mapDrawer, stepManager;
-var sprites;
+var imageLoader, sprites;
 
 var Game = {
-    interiorCreator : new InteriorCreator(),
+    houseInteriorCreator : new InteriorCreator(),
+    fisherHutInteriorCreator : new FisherHutInteriorCreator(),
     dropping : new DroppingProcess(),
     onKeyDown : function(code){
         inputListener.pressKey(code);
@@ -314,15 +315,31 @@ function getSprites(x,y,w,h,n){
     }
     return result
 }
-
 /***************************************
 
  S T A R T
 
  ****************************************/
+function init(){
+    document.getElementById('loadingScreen').style.height = HEIGHT/2;
+    document.getElementById('loadingScreen').style.paddingTop = (HEIGHT/2)+"px";
+    imageLoader = new ImageLoader();
+    imageLoader.prepare(
+        {
+            'main_sprites' : 'gfx/sprites.png',
+            'text_sprites' : 'gfx/text.png'
+        }
+    );
+
+    conditionalCallBack(function(){return imageLoader.isReady()}, start);
+}
+
 function start(){
 
-    sprites = img('gfx/sprites.png');
+    var loadingScreen = document.getElementById('loadingScreen');
+    loadingScreen.parentNode.removeChild(loadingScreen);
+
+    sprites = imageLoader.get('main_sprites');
 
     Item.add('nothing','NOTHING',1,sprites,box(0,7*8,8,8));
     Item.add('small_branch','SMALL BRANCH',10,sprites,box(0,7*8,8,8));
@@ -363,22 +380,31 @@ function start(){
         , function(){
             Game.dialog.reset();
             if(!this.interior){
-                this.interior = Game.interiorCreator.createCabinRoom();
+                this.interior = Game.houseInteriorCreator.createRoom();
             }
             Game.screens.indoor.initRoom(this.interior);
             Game.showScreen(Game.screens.indoor)
         });
+
     Units.add('building' ,SubType.RUIN,[
         new Message("THIS PLACE IS COLLAPSED."),
         new Message("THE REMNANTS OF A HOUSE.\nLOOKS LIKE IT COLLAPSED LONG AGO."),
         new Message("ONCE, THIS WAS THE HOME OF SOMEBODY.\nNOW THIS PLACE IS A RUIN.")
     ]);
-    Units.add('building' ,SubType.FISHER_HUT,[
+
+    Units.addEventUnit('building' ,SubType.FISHER_HUT,
         new Message(
             ["AN OLD AND ABANDONED FISHING HUT.\nAT LEAST SOME TYPE OF SHELTER.","A RAMSHACKLE FISHING HUT.\nKEEPS THE WIND OUTSIDE I HOPE."].rnd(),
             new Option('C','SEARCH')
-        )
-    ], true,3,5,[new Loot(Item.all.nothing,1,1,30),new Loot(Item.all.water,1,1,1),new Loot(Item.all.canned_food,1,2,1),new Loot(Item.all.matches,12,20,10),new Loot(Item.all.book,1,1,1)],3);
+        ), function(){
+            Game.dialog.reset();
+            if(!this.interior){
+                this.interior = Game.fisherHutInteriorCreator.createRoom();
+            }
+            Game.screens.indoor.initRoom(this.interior);
+            Game.showScreen(Game.screens.indoor)
+        });
+
     Units.addEventUnit('camp_fire' ,SubType.CAMP_FIRE,[
         new Message("WELL, IT STILL BURNS.",new Option('C','PUT OUT FIRE')),
         new Message("ONE LIGHT IN THE DARK.",new Option('C','PUT OUT FIRE')),
@@ -487,7 +513,7 @@ function start(){
         map : new Interior('MAP',sprites,box(0,246,26,22))
     };
 
-    textPainter = new TextPainter(img('gfx/text.png'));
+    textPainter = new TextPainter(imageLoader.get('text_sprites'));
 
     crissleCanvas = createCanvas(WIDTH,HEIGHT,null,"crissleCanvas");
     lightCanvas = createCanvas(WIDTH,HEIGHT,null,"lightCanvas");
@@ -654,7 +680,7 @@ function start(){
 
         if(x<=10 && x+8>=10 || y<=10 && y+10 >= 10) continue;
 
-        var drawFisherHut = !w(20);
+        var drawFisherHut = check(FISHER_HUT_PROBABILITY);
 
         for(var n=0; n<5+w(5); n++){
             var xLeft = w(2);

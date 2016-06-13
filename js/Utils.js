@@ -32,14 +32,23 @@ function p(x, y) {
     };
 }
 
-function img(src) {
-    var im = new Image();
-    im.src = src;
-    return im;
+function innerConditionalCallBack(condition, callback){
+    if(condition()) {
+        callback();
+    }else{
+        window.setTimeout(function(){window.requestAnimationFrame(function(){innerConditionalCallBack(condition, callback)})},10);
+    }
+}
+function conditionalCallBack(condition, callback){
+    window.requestAnimationFrame(function(){innerConditionalCallBack(condition, callback)});
 }
 
 function w(x) {
     return Math.floor(Math.random() * x)
+}
+
+function check(x){
+    return Math.random() <= x;
 }
 
 function createCanvas(width, height, inputListener, id) {
@@ -64,7 +73,6 @@ function drawBox(ctx,image,box,screen){
 
 function makePixelPerfect(ctx) {
     ctx.mozImageSmoothingEnabled = false;
-    ctx.webkitImageSmoothingEnabled = false;
     ctx.msImageSmoothingEnabled = false;
     ctx.imageSmoothingEnabled = false;
 }

@@ -1,10 +1,10 @@
 <html>
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-        <script language="javascript" src="js/SubType.js"></script>
         <script language="javascript" src="js/messages.js"></script>
         <script language="javascript" src="js/Utils.js"></script>
         <script language="javascript" src="js/config.js"></script>
+        <script language="javascript" src="js/SubType.js"></script>
         <script language="javascript" src="js/Type.js"></script>
         <script language="javascript" src="js/Direction.js"></script>
         <script language="javascript" src="js/KeyCode.js"></script>
@@ -35,6 +35,7 @@
         <script language="javascript" src="js/Interior.js"></script>
         <script language="javascript" src="js/InteriorPiece.js"></script>
         <script language="javascript" src="js/InteriorCreator.js"></script>
+        <script language="javascript" src="js/FisherHutInteriorCreator.js"></script>
         <script language="javascript" src="js/ConditionPanel.js"></script>
         <script language="javascript" src="js/Screens/CampFireScreen.js"></script>
         <script language="javascript" src="js/Screens/BoilingWaterScreen.js"></script>
@@ -44,6 +45,7 @@
         <script language="javascript" src="js/PlayerStatus.js"></script>
         <script language="javascript" src="js/PlayerMovement.js"></script>
         <script language="javascript" src="js/Player.js"></script>
+        <script language="javascript" src="js/ImageLoader.js"></script>
         <script language="javascript" src="js/main.js"></script>
 
         <style>
@@ -57,12 +59,17 @@
             }
         </style>
     </head>
-    <body onload="start()" style="text-align:center;background-color:white">
+    <body style="text-align:center;background-color:white">
+        <div id="loadingScreen"> Loading ... </div>
         <pre id="instructions" style="color:grey">
             arrow keys ------- move character
             x ---------------- random talk / cancel dialogs
             c ---------------- action (depends)
             i ---------------- inventory
         </pre>
+        <div id="imageContainer" style="display:none"></div>
+        <script language="javascript">
+            init();
+        </script>
     </body>
 </html>

@@ -3,7 +3,6 @@ function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
     this.timeStatus = 0;
 
     this.currentlySelected = null;
-
     this.interior = [];
 
     this.initRoom = function (interior) {
@@ -153,11 +152,9 @@ function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
             } else if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
                 shift = 2;
             }
-
             if (this.interior[(this.interior.length + this.currentlySelected - shift) % this.interior.length].type == InteriorPiece.TYPE.smallBottom) {
                 shift = 2;
             }
-
             this.currentlySelected = (this.interior.length + this.currentlySelected - shift) % this.interior.length;
         } else if (key == KeyCode.RIGHT) {
             if (currentInterior.type == InteriorPiece.TYPE.smallTop) {
@@ -169,7 +166,6 @@ function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
                     shift = 1;
                 }
             }
-
             this.currentlySelected = (this.currentlySelected + shift) % this.interior.length;
         } else if (key == KeyCode.UP) {
             if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
@@ -190,7 +186,7 @@ function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
         } else if (key == KeyCode.C) {
             currentInterior.interior.search();
         } else if (key == KeyCode.X) {
-            Game.hideCurrentScreen();
+        Game.hideCurrentScreen();
         }
     }
 

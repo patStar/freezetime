@@ -14,8 +14,6 @@ function Interior(name, image, coords, unit) {
         this.unit = unit ? unit() : null;
     };
     this.search = function () {
-        if (this.unit) {
-            if (this.unit.isSearchable) this.unit.search();
-        }
+        if (this.unit && this.unit.isSearchable()) this.unit.search();
     }
 }

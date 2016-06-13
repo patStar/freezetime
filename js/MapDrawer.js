@@ -74,7 +74,7 @@ function MapDrawer(ctx, map) {
 
     this.draw = function () {
         ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        ctx.fillRect(0, 0, Config.width, HEIGHT);
         ctx.fillStyle = "grey";
         ctx.translate(Game.player.movement.mapShift.x, Game.player.movement.mapShift.y);
 
@@ -212,7 +212,7 @@ function MapDrawer(ctx, map) {
 
                 ctx.globalAlpha = Math.min(Math.max(0, 1 - deathTime * 1.5), 1 - Game.player.status.condition / 100);
                 ctx.fillStyle = "white";
-                ctx.fillRect(-32, -32, WIDTH + 64, HEIGHT + 64);
+                ctx.fillRect(-32, -32, Config.width + 64, HEIGHT + 64);
                 ctx.globalAlpha = 1;
             }
         }
