@@ -1,11 +1,11 @@
-function ConditionPanel(sprites){
+function ConditionPanel(sprites, canvasWidth, canvasHeight){
 
     this.drawPanel = function(ctx){
         var barStart = 48 * 4;
 
         ctx.drawImage(sprites, 65, 64, 1, 24, 0, 0, 4, 24 * 4);
-        ctx.drawImage(sprites, 66, 64, 1, 24, 4, 0, Config.width - 2 * 4, 24 * 4);
-        ctx.drawImage(sprites, 65, 64, 1, 24, Config.width - 4, 0, 4, 24 * 4);
+        ctx.drawImage(sprites, 66, 64, 1, 24, 4, 0, canvasWidth - 2 * 4, 24 * 4);
+        ctx.drawImage(sprites, 65, 64, 1, 24, canvasHeight - 4, 0, 4, 24 * 4);
 
         ctx.drawImage(sprites, 14, 64, 7, 6, barStart, 2 * 4, 7 * 4, 6 * 4);
         ctx.drawImage(sprites, 0, 87, 1, 6, barStart + 8 * 4, 2 * 4, 4, 6 * 4);

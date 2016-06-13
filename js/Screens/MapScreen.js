@@ -12,7 +12,7 @@ function MapScreen(inputListener, mapDrawer) {
     };
 
     this.draw = function () {
-        if(Game.time-this.lastTime > stepTime){
+        if(Game.time-this.lastTime > Config.stepTime){
             this.lastTime = Game.time;
             mapDrawer.draw();
         }
@@ -45,7 +45,7 @@ function MapScreen(inputListener, mapDrawer) {
                 var messages = [];
 
                 if(Game.player.isComfortable() ){
-                    messages = messages.concat(GameMessages.defaultConditionMessages[language].map(x => new Message(x)));
+                    messages = messages.concat(GameMessages.defaultConditionMessages[Config.language].map(x => new Message(x)));
                 }else{
                     var stats = [];
 
@@ -67,7 +67,7 @@ function MapScreen(inputListener, mapDrawer) {
                     }
                 }
                 if(houseNear){
-                    messages = messages.concat(GameMessages.nearHouse[language].map(x => new Message(x)));
+                    messages = messages.concat(GameMessages.nearHouse[Config.language].map(x => new Message(x)));
                 }
                 Game.dialog.message = messages.rnd()
             }

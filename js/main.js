@@ -18,7 +18,7 @@ var Game = {
         inputListener.releaseKey(code)
     },
     createCanvas : function(name){
-        Game.canvas[name] = createCanvas(WIDTH,HEIGHT,null,name);
+        Game.canvas[name] = createCanvas(Config.width,Config.height,null,name);
         Game.ctx[name] = Game.canvas[name].getContext('2d');
         makePixelPerfect(Game.ctx[name])
     },
@@ -283,8 +283,8 @@ var dayTimeShaderColors = [];
 
 function updateShader(){
 
-    var W = WIDTH / 4;
-    var H = HEIGHT / 4;
+    var W = Config.width / 4;
+    var H = Config.height / 4;
     Game.shaderComputation = 0;
     for(var i=0; i<=30; i++){
         Game.shaderComputation = i;
@@ -321,8 +321,8 @@ function getSprites(x,y,w,h,n){
 
  ****************************************/
 function init(){
-    document.getElementById('loadingScreen').style.height = HEIGHT/2;
-    document.getElementById('loadingScreen').style.paddingTop = (HEIGHT/2)+"px";
+    document.getElementById('loadingScreen').style.height = Config.height/2;
+    document.getElementById('loadingScreen').style.paddingTop = (Config.height/2)+"px";
     imageLoader = new ImageLoader();
     imageLoader.prepare(
         {
@@ -515,9 +515,9 @@ function start(){
 
     textPainter = new TextPainter(imageLoader.get('text_sprites'));
 
-    crissleCanvas = createCanvas(WIDTH,HEIGHT,null,"crissleCanvas");
-    lightCanvas = createCanvas(WIDTH,HEIGHT,null,"lightCanvas");
-    gameCanvas = createCanvas(WIDTH,HEIGHT,inputListener,"gameCanvas");
+    crissleCanvas = createCanvas(Config.width,Config.height,null,"crissleCanvas");
+    lightCanvas = createCanvas(Config.width,Config.height,null,"lightCanvas");
+    gameCanvas = createCanvas(Config.width,Config.height,inputListener,"gameCanvas");
 
     lightCtx = lightCanvas.getContext('2d');
     crissleCtx = crissleCanvas.getContext('2d');
@@ -532,8 +532,8 @@ function start(){
     Game.createCanvas('map');
 
     var effectSize = 4;
-    for(var y=0; y<HEIGHT; y+=effectSize){
-        for(var x=0; x<HEIGHT; x+=effectSize){
+    for(var y=0; y<Config.height; y+=effectSize){
+        for(var x=0; x<Config.height; x+=effectSize){
             var r = w(256);
             crissleCtx.fillStyle="rgb("+r+","+r+","+r+")";
             crissleCtx.fillRect(x,y,effectSize,effectSize)
@@ -541,7 +541,7 @@ function start(){
     }
 
     ctx.filllStyle = "black";
-    ctx.fillRect(0,0,WIDTH,HEIGHT);
+    ctx.fillRect(0,0,Config.width,Config.height);
 
     document.body.appendChild(gameCanvas);
     document.body.appendChild(document.getElementById('instructions'));
@@ -555,12 +555,12 @@ function start(){
         Game.onKeyUp(code);
     };
 
-    map = new Map(MAP_WIDTH,MAP_HEIGHT);
+    map = new Map(Config.mapWidth,Config.mapHeight);
 
     // grass
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*GRASS_PROBABILITY); i++){
-        var x = w(MAP_WIDTH);
-        var y = w(MAP_HEIGHT);
+    for(var i=0; i<Math.floor((Config.mapWidth*Config.mapHeight)*GRASS_PROBABILITY); i++){
+        var x = w(Config.mapWidth);
+        var y = w(Config.mapHeight);
 
         for(var n=0; n<5+w(5); n++){
             var xLeft = w(5);
@@ -573,16 +573,16 @@ function start(){
     }
 
     // stones
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*STONE_PROBABILITY); i++){
-        var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT));
+    for(var i=0; i<Math.floor((Config.mapWidth*Config.mapHeight)*STONE_PROBABILITY); i++){
+        var field = map.get(w(Config.mapWidth),w(Config.mapHeight));
         field.unit = Units.STONE;
         field.type = 8
     }
 
     // huts
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*HUT_PROBABILITY); i++){
-        var x = w(MAP_WIDTH);
-        var y = w(MAP_HEIGHT);
+    for(var i=0; i<Math.floor((Config.mapWidth*Config.mapHeight)*HUT_PROBABILITY); i++){
+        var x = w(Config.mapWidth);
+        var y = w(Config.mapHeight);
         var field = map.get(x,y);
 
         if(x<=10 && x+8>=10 || y<=10 && y+10 >= 10) continue;
@@ -640,9 +640,9 @@ function start(){
     }
 
     // corpse
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*CORPSE_PROBABILITY); i++){
-        var x = w(MAP_WIDTH);
-        var y = w(MAP_HEIGHT);
+    for(var i=0; i<Math.floor((Config.mapWidth*Config.mapHeight)*CORPSE_PROBABILITY); i++){
+        var x = w(Config.mapWidth);
+        var y = w(Config.mapHeight);
         var field = map.get(x,y);
         if(arrayContains(field.type,passableTypes)){
             men.push(p(x,y));
@@ -655,9 +655,9 @@ function start(){
     }
 
     // wood
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*WOOD_PROBABILITY); i++){
-        var x = w(MAP_WIDTH);
-        var y = w(MAP_HEIGHT);
+    for(var i=0; i<Math.floor((Config.mapWidth*Config.mapHeight)*WOOD_PROBABILITY); i++){
+        var x = w(Config.mapWidth);
+        var y = w(Config.mapHeight);
 
         if(x<=10 && x+8>=10 || y<=10 && y+10 >= 10) continue;
 
@@ -674,9 +674,9 @@ function start(){
     }
 
     // lake
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*LAKE_PROBABILITY); i++){
-        var x = w(MAP_WIDTH);
-        var y = w(MAP_HEIGHT);
+    for(var i=0; i<Math.floor((Config.mapWidth*Config.mapHeight)*LAKE_PROBABILITY); i++){
+        var x = w(Config.mapWidth);
+        var y = w(Config.mapHeight);
 
         if(x<=10 && x+8>=10 || y<=10 && y+10 >= 10) continue;
 
@@ -739,16 +739,16 @@ function start(){
     }
 
     // items
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*ITEM_PROBABILITY); i++){
-        var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT));
+    for(var i=0; i<Math.floor((Config.mapWidth*Config.mapHeight)*ITEM_PROBABILITY); i++){
+        var field = map.get(w(Config.mapWidth),w(Config.mapHeight));
         if(field.type != 0) continue;
 
         field.unit = Units.item.small_branch();
     }
 
     // hidden items
-    for(var i=0; i<Math.floor((MAP_WIDTH*MAP_HEIGHT)*HIDDEN_ITEM_PROBABILITY); i++){
-        var field = map.get(w(MAP_WIDTH),w(MAP_HEIGHT));
+    for(var i=0; i<Math.floor((Config.mapWidth*Config.mapHeight)*HIDDEN_ITEM_PROBABILITY); i++){
+        var field = map.get(w(Config.mapWidth),w(Config.mapHeight));
         if(field.type != 0) continue;
 
         field.unit = Units.item.unknownInTheSnow();
@@ -768,7 +768,7 @@ function start(){
 
     inputListener.registerClient(mapDrawer);
 
-    var conditionPanel = new ConditionPanel(sprites);
+    var conditionPanel = new ConditionPanel(sprites, Config.width, Config.height);
 
     Game.screens.default = new MapScreen(inputListener, mapDrawer);
     Game.screens.indoor = new IndoorScreen(Game.ctx.overlay, messagePanel, inventoryBag, conditionPanel);
@@ -778,7 +778,7 @@ function start(){
     Game.screens.boilingWater = new BoilingWaterScreen(Game.ctx.overlay,messagePanel);
 
 
-    ctx.clearRect(0,0,WIDTH,HEIGHT);
+    ctx.clearRect(0,0,Config.width,Config.height);
 
     updateShader();
 
@@ -882,7 +882,7 @@ function tick(time){
     Game.time = time;
     Game.update();
 
-    if(time-lastAnimationTime > animationStepTime){
+    if(time-lastAnimationTime > Config.animationStepTime){
         lastAnimationTime = time;
         AnimatedSprite.all.BEAR.tick();
         AnimatedSprite.all.CAMP_FIRE.tick();
@@ -894,7 +894,7 @@ function tick(time){
     }
 
     var overlayCtx = Game.ctx.overlay;
-    overlayCtx.clearRect(0,0,WIDTH,HEIGHT);
+    overlayCtx.clearRect(0,0,Config.width,Config.height);
 
     Game.player.update(inputListener);
     Game.search.update(time);
@@ -903,15 +903,15 @@ function tick(time){
     if(Game.dialog.message){
         if(Game.dialog.message.hasText()){
             overlayCtx.fillStyle = "#21262b";
-            overlayCtx.fillRect(0,13*32-5-4,WIDTH,100);
+            overlayCtx.fillRect(0,13*32-5-4,Config.width,100);
             overlayCtx.fillStyle = "#e0f0f0";
-            overlayCtx.fillRect(0,13*32-5,WIDTH,100- 2*4);
+            overlayCtx.fillRect(0,13*32-5,Config.width,100- 2*4);
 
             overlayCtx.drawImage(sprites,Type.speak.x*8,Type.speak.y*8,8,8,10*32,12*32-5,32,32);
             var textLines = Game.dialog.message.getLines();
             for(var i=0; i<textLines.length;i++){
                 var message = textLines[i];
-                textPainter.drawText(message,overlayCtx,Math.floor(WIDTH/2-message.length*8),13*32+10+(7*4)*i);
+                textPainter.drawText(message,overlayCtx,Math.floor(Config.width/2-message.length*8),13*32+10+(7*4)*i);
             }
         }
 
@@ -953,7 +953,7 @@ function tick(time){
     ctx.globalAlpha = 0.05;
     ctx.drawImage(crissleCanvas,0,0);
     ctx.globalAlpha = 1;
-    ctx.drawImage(dayTimeShader[dayLight],0,0,WIDTH/4,HEIGHT/4,0,0,WIDTH,HEIGHT);
+    ctx.drawImage(dayTimeShader[dayLight],0,0,Config.width/4,Config.height/4,0,0,Config.width,Config.height);
     ctx.globalAlpha = 1;
     ctx.drawImage(Game.canvas.overlay,0,0);
     ctx.globalAlpha = 1;

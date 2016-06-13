@@ -58,7 +58,7 @@ function TextPainter(sprite){
     };
 
     this.reset = function(){
-        Game.ctx.overlay.clearRect(0,0,Config.width,HEIGHT)
+        Game.ctx.overlay.clearRect(0,0,Config.width,Config.height)
     };
 
     this.drawText = function(text,ctx,x,y){

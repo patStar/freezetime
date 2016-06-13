@@ -1,6 +1,6 @@
 function Type(x, y, id) {
-    this.x = x * fieldSize.x;
-    this.y = y * fieldSize.y;
+    this.x = x * Config.fieldSize.x;
+    this.y = y * Config.fieldSize.y;
     this.coordinate = function(){
         return p(this.x,this.y);
     };

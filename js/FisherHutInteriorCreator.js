@@ -1,6 +1,6 @@
 function FisherHutInteriorCreator(){
 
-    const FURNITURE_Config.width = 128;
+    const FURNITURE_WIDTH = 128;
     const OFFSET_LEFT = 32;
 
     this.createRoom = function () {
