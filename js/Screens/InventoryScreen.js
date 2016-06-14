@@ -60,18 +60,22 @@ function InventoryScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
             if (key == KeyCode.LEFT) {
                 if (Game.selectedInventorySlot % 2) {
                     Game.selectedInventorySlot -= 1;
+                    Game.dialog.reset();
                 }
             } else if (key == KeyCode.RIGHT) {
                 if (!(Game.selectedInventorySlot % 2)) {
                     Game.selectedInventorySlot += 1;
+                    Game.dialog.reset();
                 }
             } else if (key == KeyCode.UP) {
                 if (Game.selectedInventorySlot > 1) {
                     Game.selectedInventorySlot -= 2
+                    Game.dialog.reset();
                 }
             } else if (key == KeyCode.DOWN) {
                 if (Game.selectedInventorySlot < 4) {
                     Game.selectedInventorySlot += 2
+                    Game.dialog.reset();
                 }
             } else if (key == KeyCode.S) {
                 if (Game.player.isNearCampFire()) {
@@ -84,14 +88,20 @@ function InventoryScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
                     Game.campFireManager.startCampFire();
                 }
             } else if (key == KeyCode.I) {
+                Game.dialog.reset();
                 Game.hideInventory();
             } else if (key == KeyCode.D) {
+                Game.dialog.reset();
                 Game.dropping.start()
             } else if (key == KeyCode.C) {
-                if (Game.player.inventory.getSlot(Game.selectedInventorySlot).item.canBeUsed()) {
+                Game.dialog.reset();
+                if(infoMessage) {
+                    infoMessage.option.action();
+                }else if (Game.player.inventory.getSlot(Game.selectedInventorySlot).item.canBeUsed()) {
                     Game.player.inventory.getSlot(Game.selectedInventorySlot).item.use(Game.player.inventory.getSlot(Game.selectedInventorySlot));
                 }
             } else if (key == KeyCode.X) {
+                Game.dialog.reset();
                 Game.hideInventory();
             }
         }

@@ -1,4 +1,4 @@
-function TextPainter(sprite){
+function TextPainter(sprite, canvasWidth, canvasHeight){
     var textSprite = sprite;
     var textPattern = {
         'A' : box(0,0,5,7),
@@ -58,7 +58,7 @@ function TextPainter(sprite){
     };
 
     this.reset = function(){
-        Game.ctx.overlay.clearRect(0,0,Config.width,Config.height)
+        Game.ctx.overlay.clearRect(0,0,canvasWidth, canvasHeight)
     };
 
     this.drawText = function(text,ctx,x,y){

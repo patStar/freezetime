@@ -1,6 +1,6 @@
 function Option(key, text, action) {
     this.action = action;
     this.getText = function () {
-        return "(" + key + ") " + text;
+        return "(" + (key ? key : 'C') + ") " + text;
     };
 }

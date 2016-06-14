@@ -1,21 +1,27 @@
-function MessagePanel() {
+function MessagePanel(canvasWidth, canvasHeight) {
+
+    function drawText(message, top, _lineSpan, ctx) {
+        var textLines = message.getLines();
+        for (var i = 0; i < textLines.length; i++) {
+            var messageLine = textLines[i];
+            var x = Math.floor(canvasWidth / 2 - messageLine.length * 8);
+            var y = top + 19 + (7 + _lineSpan) * 4 * i;
+            textPainter.drawText(messageLine, ctx, x, y);
+        }
+    }
+
     this.drawOn = function (message, ctx, speech, lineSpan) {
         var top = 13 * 32 - 5 - 4;
 
         var _lineSpan = lineSpan || 1;
         ctx.fillStyle = "#21262b";
-        ctx.fillRect(0, top, Config.width, 100);
+        ctx.fillRect(0, top, canvasWidth, 100);
         ctx.fillStyle = "#e0f0f0";
-        ctx.fillRect(0, top + 4, Config.width, 100 - 2 * 4);
+        ctx.fillRect(0, top + 4, canvasHeight, 100 - 2 * 4);
 
         if (speech) ctx.drawImage(sprites, Type.speak.x * 8, Type.speak.y * 8, 8, 8, 10 * 32, 12 * 32 - 5, 32, 32);
-        var textLines = message.getLines();
-        for (var i = 0; i < textLines.length; i++) {
-            var messageLine = textLines[i];
-            var x = Math.floor(Config.width / 2 - messageLine.length * 8);
-            var y = top + 19 + (7 + _lineSpan) * 4 * i;
-            textPainter.drawText(messageLine, ctx, x, y);
-        }
+
+        drawText(message, top, _lineSpan, ctx);
 
         if (message.hasDoubleOption()) {
             ctx.fillStyle = "#21262b";

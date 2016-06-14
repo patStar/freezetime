@@ -101,20 +101,20 @@ var Game = {
     },
     lastTemperatureUpdate : Date.now(),
     currentTemperatureModifier : 1.6,
-    update : function(){
-        if(Game.search.isSearching()){
+    update : function() {
+        if (Game.search.isSearching()) {
             var n = Game.search.searchTime - Game.search.searchTimeToDo + 1;
-            Game.setMessage(new Message(Game.search.message+"\n\n\n"+" ".repeat(Math.floor(Game.search.searchTime/3))+"["+"I".repeat(n)+".".repeat(Game.search.searchTimeToDo-1)+"]"),true)
+            Game.setMessage(new Message(Game.search.message + "\n\n\n" + " ".repeat(Math.floor(Game.search.searchTime / 3)) + "[" + "I".repeat(n) + ".".repeat(Game.search.searchTimeToDo - 1) + "]"), true)
         }
 
         // dying
-        if(Game.player.status.condition == 0 && Game.player.status.isAlive()){
+        if (Game.player.status.condition == 0 && Game.player.status.isAlive()) {
             document.getElementById('instructions').style.display = "none";
             Game.player.status.dead = Date.now();
             Game.dialog.reset();
         }
 
-        if(Date.now() - Game.dayTime.lastUpdate > 1000 && Game.player.status.isAlive()){
+        if (Date.now() - Game.dayTime.lastUpdate > 1000 && Game.player.status.isAlive()) {
 
             Game.dayTime.lastUpdate = Date.now();
             Game.dayTime.next();
@@ -122,19 +122,23 @@ var Game = {
             Game.player.status.updateConditions();
         }
 
-        if(Date.now() - Game.lastTemperatureUpdate > 1000){
+        if (Date.now() - Game.lastTemperatureUpdate > 1000) {
             Game.lastTemperatureUpdate = Date.now();
             var modifier = 0;
-            if(!w(10)){
-                if(w(2)){
+            if (!w(10)) {
+                if (w(2)) {
                     modifier = 0.1;
-                }else{
+                } else {
                     modifier = 0.1;
                 }
             }
 
 
-            Game.currentTemperatureModifier = Math.max(1.3,Math.min(5, Game.currentTemperatureModifier+modifier));
+            Game.currentTemperatureModifier = Math.max(1.3, Math.min(5, Game.currentTemperatureModifier + modifier));
+        }
+
+        if (Game.currentScreen instanceof MapScreen) {
+            Game.player.update(inputListener);
         }
     },
     search : {
@@ -341,11 +345,15 @@ function start(){
 
     sprites = imageLoader.get('main_sprites');
 
-    Item.add('nothing','NOTHING',1,sprites,box(0,7*8,8,8));
-    Item.add('small_branch','SMALL BRANCH',10,sprites,box(0,7*8,8,8));
-    Item.add('matches','MATCHES',99,sprites,box(7*8,7*8,8,8));
-    Item.add('book','BOOK',5,sprites,box(8*8,7*8,8,8));
-    Item.add('canned_food','CANNED FOOD',5,sprites,box(14*8,7*8,8,8),function(){},function(){},function(item){
+    Item.add('nothing'      ,'NOTHING'      ,1  ,sprites,box(0,7*8,8,8));
+    Item.add('small_branch' ,'SMALL BRANCH' ,10 ,sprites,box(0,7*8,8,8));
+    Item.add('matches'      ,'MATCHES'      ,99 ,sprites,box(7*8,7*8,8,8));
+    Item.add('book'         ,'BOOK'         ,5  ,sprites,box(8*8,7*8,8,8));
+
+    Item.add('raw_fish'  ,'RAW FOOD'  ,5  ,sprites,box(53,384,8,8),function(){},function(){},function(item){
+        Game.dialog.reset();
+    });
+    Item.add('canned_food'  ,'CANNED FOOD'  ,5  ,sprites,box(14*8,7*8,8,8),function(){},function(){},function(item){
         if(Math.floor(Game.player.status.hunger * 25 /Game.player.status.hungerThresholds[3]) > 0){
             Game.player.status.hunger = Math.max(0,Game.player.status.hunger - 800);
             Game.player.inventory.remove(item)
@@ -364,14 +372,16 @@ function start(){
 
     Units.add('animal','bear',[new Message("_")]);
 
-    Units.add('indoor','shelf'			,[new Message("A SHELF",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,1),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)],0,3);
-    Units.add('indoor','small_shelf'	,[new Message("A SMALL SHELF",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,1),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)],0,1);
-    Units.add('indoor','big_table'		,[new Message("A TABLE",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,1),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)],0,2);
-    Units.add('indoor','stone_hearth'	,[new Message("A STONE HEARTH",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,1),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.book,1,1,1)],0,1);
-    Units.add('corpse','elder_man'		,[new Message("THE FROZEN CORPSE OF AN ELDER MAN.\nWHAT A MESS!",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
-    Units.add('corpse','elder_women'	,[new Message("THE DEAD BODY OF AN ELDER WOMAN.\nI WONDER WHAT HAPPENED TO HER.",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
-    Units.add('corpse','women'			,[new Message("SHE'S DEAD.\nWHAT WAS SHE DOING OUT HERE?",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
-    Units.add('corpse','man'			,[new Message("THIS MAN IS DEAD. HE IS FROZEN.\nI CAN'T SEE ANY WOUNDS.",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
+    Units.add('indoor','shelf'			    ,[new Message("A SHELF",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,1),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)],0,3);
+    Units.add('indoor','small_shelf'	    ,[new Message("A SMALL SHELF",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,1),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)],0,1);
+    Units.add('indoor','upper_small_shelf'	,[new Message("A SMALL SHELF",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,1),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)],0,1);
+    Units.add('indoor','big_table'		    ,[new Message("A TABLE",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,1),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)],0,2);
+    Units.add('indoor','stone_hearth'	    ,[new Message("A STONE HEARTH",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,1),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.small_branch,1,4,10),new Loot(Item.all.book,1,1,1)],0,1);
+    Units.add('indoor','stove'	            ,[new Message("A STOVE",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,1),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.book,1,1,1)],0,1);
+    Units.add('corpse','elder_man'		    ,[new Message("THE FROZEN CORPSE OF AN ELDER MAN.\nWHAT A MESS!",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
+    Units.add('corpse','elder_women'	    ,[new Message("THE DEAD BODY OF AN ELDER WOMAN.\nI WONDER WHAT HAPPENED TO HER.",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
+    Units.add('corpse','women'			    ,[new Message("SHE'S DEAD.\nWHAT WAS SHE DOING OUT HERE?",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
+    Units.add('corpse','man'			    ,[new Message("THIS MAN IS DEAD. HE IS FROZEN.\nI CAN'T SEE ANY WOUNDS.",new Option('C','SEARCH'))], true,3,4,[new Loot(Item.all.nothing,1,1,100),new Loot(Item.all.matches,2,12,10),new Loot(Item.all.water,1,1,1),new Loot(Item.all.book,1,1,1)]);
     Units.addEventUnit('building' ,SubType.HOUSE,
         new Message(
             ["SHELTER! FINALLY!","THIS ONE'S STILL STANDING.\nLET'S HAVE A LOOK INSIDE.","A SAFE PLACE TO HIDE\nFROM THE WIND?"].rnd(),
@@ -382,7 +392,7 @@ function start(){
             if(!this.interior){
                 this.interior = Game.houseInteriorCreator.createRoom();
             }
-            Game.screens.indoor.initRoom(this.interior);
+            Game.screens.indoor.initRoom(Indoor.viewFieldHouse, this.interior);
             Game.showScreen(Game.screens.indoor)
         });
 
@@ -401,7 +411,7 @@ function start(){
             if(!this.interior){
                 this.interior = Game.fisherHutInteriorCreator.createRoom();
             }
-            Game.screens.indoor.initRoom(this.interior);
+            Game.screens.indoor.initRoom(Indoor.viewFieldFisherHut, this.interior);
             Game.showScreen(Game.screens.indoor)
         });
 
@@ -412,6 +422,25 @@ function start(){
         new Message("I MIGHT SURVIVE A BIT LONGER NOW.",new Option('C','PUT OUT FIRE')),
     ].rnd(),function(){
         Game.campFireManager.putOutCampFire(Game.currentInterest);
+        Game.dialog.reset()
+    });
+
+    Units.addEventUnit('indoor' ,'fishing_hole_closed',[
+        new Message("A FROZEN FISHING HOLE.",new Option('C','CRACK IT UP')),
+    ].rnd(),function(screen){
+        for(var i in Object.getOwnPropertyNames(screen.interior)){
+            if(screen.interior[i].interior.name == Indoor.fishingHoleClosed.name){
+                screen.interior[i] = FisherHutInteriorCreator.createOpenFishingHole();
+                break;
+            }
+        }
+        Game.dialog.reset()
+    });
+
+    Units.addEventUnit('indoor' ,'fishing_hole_open',[
+        new Message("A FISHING HOLE.",new Option('C','START FISHING')),
+    ].rnd(),function(){
+        Game.player.inventory.addItem(Item.all.raw_fish, 1);
         Game.dialog.reset()
     });
 
@@ -447,73 +476,24 @@ function start(){
     AnimatedSprite.all.PLAYER_CHAR_MAN_BACK_LEFT = new AnimatedSprite(sprites,[box(3*8,7*8,8,8),box(4*8,7*8,8,8)]);
     AnimatedSprite.all.PLAYER_CHAR_MAN_DYING = new AnimatedSprite(sprites,getSprites(72,80,8,8,3).concat([box(80,80,8,8),box(80,80,8,8)]).concat(getSprites(72,80,8,8,3)).concat([box(80,80,8,8),box(80,80,8,8),box(80,80,8,8),box(80,80,8,8),box(72,80,8,8),box(72,80,8,8),box(72,80,8,8),box(72,80,8,8)]).concat(getSprites(96,80,8,8,4)),true);
 
-    Type.guy = new Type(0,0);
-    Type.man = new Type(0,3);
-    Type.tree1 = new Type(1,0);
-    Type.tree2 = new Type(2,0);
-    Type.tree3 = new Type(3,0);
-    Type.tree4 = new Type(4,0);
-    Type.grass = new Type(5,0);
-    Type.grass_2 = new Type(3,6);
-    Type.grass_3 = new Type(4,6);
-    Type.grass_4 = new Type(5,6);
-    Type.grass_5 = new Type(6,6);
-    Type.twig = new Type(7,6);
-    Type.unknown_item = new Type(8,6);
-    Type.drop = new Type(12,5);
-
-    Type.house = new Type(6,0);
-    Type.hole = new Type(7,0);
-    Type.stepsRight = new Type(8,0);
-    Type.ground = new Type(9,0);
-    Type.see = new Type(10,0);
-    Type.stepsDown = new Type(11,0);
-    Type.stepsUp = new Type(12,0);
-    Type.stepsLeft = new Type(13,0);
-    Type.steps = new Type(14,0);
-    Type.ground_2 = new Type(15,0);
-    Type.see_n_w = new Type(0,1);
-    Type.see_n_e = new Type(1,1);
-    Type.see_s_w = new Type(2,1);
-    Type.see_s_e = new Type(3,1);
-    Type.see_w = new Type(4,1);
-    Type.see_e = new Type(5,1);
-    Type.see_e_x = new Type(6,1);
-    Type.see_w_x = new Type(7,1);
-    Type.see_n_x = new Type(8,1);
-    Type.see_s_x = new Type(9,1);
-    Type.see_sn_x = new Type(10,1);
-    Type.see_we_x = new Type(11,1);
-    Type.ground_3 = new Type(6,3);
-    Type.ground_4 = new Type(7,3);
-    Type.ruin= new Type(8,3);
-    Type.speak= new Type(9,3);
-    Type.single_lake= new Type(10,3);
-
-    Type.hutStart= new Type(3,4);
-    Type.ruinStart= new Type(0,35);
-    Type.mirror_man= new Type(9,4);
-
-    Type.fisher_hut= new Type(10,4);
-
-    Type.camp_fire= new Type(9,7);
-    Type.camp_fire_build= new Type(10,7);
-    Type.camp_fire_impossible =new Type(11,7);
-    Type.guy_sitting =new Type(12,7);
-
     Indoor = {
         pointer: new Interior('POINTER',sprites,box(14,70,5,6)),
-        viewField : new Interior('VIEW FIELD',sprites,box(0,141,107,71)),
+        viewFieldHouse : new Interior('VIEW FIELD HOUSE',sprites,box(0,141,107,71)),
+        viewFieldFisherHut : new Interior('VIEW FIELD FISHER HUT',sprites,box(0,312,107,71)),
         window : new Interior('WINDOW',sprites,box(0,213,26,21)),
         stoneHearth : new Interior('STONE HEARTH',sprites,box(26, 213, 23, 56),Units.indoor.stone_hearth),
+        stove : new Interior('STOVE',sprites,box(0, 384, 28, 59),Units.indoor.stove),
+        fishingHoleClosed : new Interior('FROZEN FISHING HOLE',sprites,box(28, 397, 25, 13),Units.indoor.fishing_hole_closed),
+        fishingHole : new Interior('FISHING HOLE',sprites,box(28, 384, 25, 13),Units.indoor.fishing_hole_open),
         shelf : new Interior('SHELF',sprites,box(49, 213, 23, 44),Units.indoor.shelf),
         table : new Interior('TABLE',sprites,box(72, 213, 20, 20),Units.indoor.big_table),
         smallShelf : new Interior('SMALL SHELF',sprites,box(92, 213, 23, 25),Units.indoor.small_shelf),
+        upperShelf : new Interior('UPPER SHELF',sprites,box(49, 256, 23, 20),Units.indoor.upper_small_shelf),
         bigTable : new Interior('TABLE',sprites,box(72,238,32,18),Units.indoor.big_table),
         map : new Interior('MAP',sprites,box(0,246,26,22))
     };
 
-    textPainter = new TextPainter(imageLoader.get('text_sprites'));
+    textPainter = new TextPainter(imageLoader.get('text_sprites'), Config.width, Config.height);
 
     crissleCanvas = createCanvas(Config.width,Config.height,null,"crissleCanvas");
     lightCanvas = createCanvas(Config.width,Config.height,null,"lightCanvas");
@@ -764,13 +744,13 @@ function start(){
      */
 
 
-    mapDrawer = new MapDrawer(Game.ctx.map, map, stepManager);
+    mapDrawer = new MapDrawer(Game.ctx.map, map, Config.width, Config.height);
 
     inputListener.registerClient(mapDrawer);
 
     var conditionPanel = new ConditionPanel(sprites, Config.width, Config.height);
 
-    Game.screens.default = new MapScreen(inputListener, mapDrawer);
+    Game.screens.default = new MapScreen(inputListener, mapDrawer, Config.stepTime, Config.language);
     Game.screens.indoor = new IndoorScreen(Game.ctx.overlay, messagePanel, inventoryBag, conditionPanel);
     Game.screens.inventory = new InventoryScreen(Game.ctx.overlay,messagePanel, inventoryBag, conditionPanel);
     Game.screens.looting = new LootingScreen(Game.ctx.overlay,messagePanel,inventoryBag);
@@ -788,7 +768,7 @@ function start(){
     window.requestAnimationFrame(tick)
 }
 
-var messagePanel = new MessagePanel();
+var messagePanel = new MessagePanel(Config.width, Config.height);
 var inventoryBag = new InventoryPainter();
 var Indoor = {};
 
@@ -896,7 +876,6 @@ function tick(time){
     var overlayCtx = Game.ctx.overlay;
     overlayCtx.clearRect(0,0,Config.width,Config.height);
 
-    Game.player.update(inputListener);
     Game.search.update(time);
     Game.drawCurrentScreen();
 

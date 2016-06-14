@@ -1,12 +1,13 @@
 function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
     this.visible = false;
     this.timeStatus = 0;
-
+    this.viewField = null;
     this.currentlySelected = null;
     this.interior = [];
 
-    this.initRoom = function (interior) {
+    this.initRoom = function (viewField, interior) {
         this.interior = interior
+        this.viewField = viewField;
     };
 
     this.show = function () {
@@ -67,11 +68,8 @@ function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
             if (slot.item.id != Item.all.nothing.id && (!Game.looting.pickUpInProgress || Game.looting.currentPickUpNumber != 0)) drawButton(ctx, 32 * 12, 16 * 32, this.side == 1 ? '(C) PICK UP' : '(C) STASH');
         } else {
             var interiorViewField = p(7 * 32 + 8, 4 * 32 - 16);
-            Indoor.viewField.draw(ctx, interiorViewField);
-            for (var interiorPiece of
-            this.interior
-        )
-            {
+            this.viewField.draw(ctx, interiorViewField);
+            for (var interiorPiece of this.interior) {
                 interiorPiece.draw(ctx, interiorViewField)
             }
             var currentInterior = this.interior[this.currentlySelected];
@@ -80,8 +78,9 @@ function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
             var message = new Message(currentInterior.interior.name);
             messagePanel.drawOn(message, ctx);
 
-            drawButton(ctx, 32 * 2 - 16, 16 * 32, '(X) EXIT');
-            drawButton(ctx, 32 * 13, 16 * 32, '(C) SEARCH');
+            drawButton(ctx, 32 * 2 - 16, 16 * 32, currentInterior.interior.getText());
+            drawButton(ctx, 32 * 13, 16 * 32, '(X) EXIT');
+
             //drawButton(ctx,32*5,18*32,'(S) SWITCH ROOM');
         }
     };
@@ -149,23 +148,38 @@ function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
         if (key == KeyCode.LEFT) {
             if (currentInterior.type == InteriorPiece.TYPE.smallTop) {
                 shift = 1;
-            } else if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
-                shift = 2;
-            }
-            if (this.interior[(this.interior.length + this.currentlySelected - shift) % this.interior.length].type == InteriorPiece.TYPE.smallBottom) {
-                shift = 2;
-            }
-            this.currentlySelected = (this.interior.length + this.currentlySelected - shift) % this.interior.length;
-        } else if (key == KeyCode.RIGHT) {
-            if (currentInterior.type == InteriorPiece.TYPE.smallTop) {
-                shift = 2;
-            } else if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
-                if (this.interior[(this.interior.length + this.currentlySelected + shift) % this.interior.length].type == InteriorPiece.TYPE.smallTop) {
+            } else if (currentInterior.type == InteriorPiece.TYPE.smallBottom){
+                if(this.interior[(this.interior.length + this.currentlySelected - 1) % this.interior.length].type == InteriorPiece.TYPE.smallTop) {
                     shift = 2;
-                } else {
+                }else{
+                    shift = 1;
+                }
+            }else if(currentInterior.type == InteriorPiece.TYPE.big){
+                if (this.interior[(this.interior.length + this.currentlySelected - 1) % this.interior.length].type == InteriorPiece.TYPE.smallBottom && this.interior[(this.interior.length + this.currentlySelected - 2) % this.interior.length].type == InteriorPiece.TYPE.smallTop) {
+                    shift = 2;
+                }else{
                     shift = 1;
                 }
             }
+
+            this.currentlySelected = (this.interior.length + this.currentlySelected - shift) % this.interior.length;
+        } else if (key == KeyCode.RIGHT) {
+            if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
+                shift = 1;
+            } else if (currentInterior.type == InteriorPiece.TYPE.smallTop){
+                if(this.interior[(this.interior.length + this.currentlySelected + 1) % this.interior.length].type == InteriorPiece.TYPE.smallBottom) {
+                    shift = 2;
+                }else{
+                    shift = 1;
+                }
+            }else if(currentInterior.type == InteriorPiece.TYPE.big){
+                if (this.interior[(this.interior.length + this.currentlySelected + 1) % this.interior.length].type == InteriorPiece.TYPE.smallBottom && this.interior[(this.interior.length + this.currentlySelected + 2) % this.interior.length].type == InteriorPiece.TYPE.smallTop) {
+                    shift = 2;
+                }else{
+                    shift = 1;
+                }
+            }
+
             this.currentlySelected = (this.currentlySelected + shift) % this.interior.length;
         } else if (key == KeyCode.UP) {
             if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
@@ -177,16 +191,24 @@ function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
         } else if (key == KeyCode.DOWN) {
             if (currentInterior.type == InteriorPiece.TYPE.smallTop) {
                 shift = 1;
-            } else {
+            } else if (currentInterior.type == InteriorPiece.TYPE.smallBottom) {
                 shift = 0;
+            } else if(currentInterior.type == InteriorPiece.TYPE.big){
+                if(this.interior[(this.currentlySelected+1) % this.interior.length].type == InteriorPiece.TYPE.smallBottom && this.interior[(this.currentlySelected-1+this.interior.length) % this.interior.length].type != InteriorPiece.TYPE.smallBottom){
+                    shift = 1;
+                }else if(this.interior[(this.currentlySelected-1+this.interior.length) % this.interior.length].type == InteriorPiece.TYPE.smallBottom){
+                    shift = -1;
+                }else{
+                    shift = 0;
+                }
             }
             this.currentlySelected = (this.currentlySelected + shift) % this.interior.length;
         } else if (key == KeyCode.S) {
             //this.initRoom()
         } else if (key == KeyCode.C) {
-            currentInterior.interior.search();
+            currentInterior.interior.interact(this);
         } else if (key == KeyCode.X) {
-        Game.hideCurrentScreen();
+            Game.hideCurrentScreen();
         }
     }
 
@@ -196,7 +218,7 @@ function IndoorScreen(ctx, messagePanel, inventoryBag, conditionPanel) {
         if (Game.looting.unit) {
             if (Game.looting.pickUpInProgress) {
                 handlePickupInProgress(key);
-            }else{
+            } else {
                 handleLooting.call(this, key);
             }
         } else {

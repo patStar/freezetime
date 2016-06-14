@@ -13,7 +13,20 @@ function Interior(name, image, coords, unit) {
     this.init = function () {
         this.unit = unit ? unit() : null;
     };
-    this.search = function () {
-        if (this.unit && this.unit.isSearchable()) this.unit.search();
+    this.interact = function (screen) {
+        if (this.unit){
+            if(this.unit.isSearchable()) this.unit.search();
+            else if(this.unit.isEventUnit()) {
+                this.unit.event(screen);
+            }
+        }
+    };
+
+    this.getText = function() {
+        if (this.unit){
+            if(this.unit.isSearchable()) return '(C) SEARCH';
+            else if(this.unit.isEventUnit()) return this.unit.message.option.getText();
+        }
+        return '(?) ???';
     }
 }

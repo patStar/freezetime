@@ -1,4 +1,4 @@
-function MapDrawer(ctx, map) {
+function MapDrawer(ctx, map, canvasWidth, canvasHeight) {
 
     var HOUSE = 7;
     var SEA = 9;
@@ -74,7 +74,7 @@ function MapDrawer(ctx, map) {
 
     this.draw = function () {
         ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, Config.width, Config.height);
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         ctx.fillStyle = "grey";
         ctx.translate(Game.player.movement.mapShift.x, Game.player.movement.mapShift.y);
 
@@ -85,7 +85,7 @@ function MapDrawer(ctx, map) {
             for (var xs = -16; xs < 12; xs++) {
                 var field = map.get(Game.player.movement.position.x + xs, Game.player.movement.position.y + ys);
 
-                var positionOnScreen = p(10+xs,10+ys)
+                var positionOnScreen = p(10+xs,10+ys);
                 var spriteCoordinates = tileSpriteMapping[field.type];
 
                 // Mirror the player in a lake
@@ -212,7 +212,7 @@ function MapDrawer(ctx, map) {
 
                 ctx.globalAlpha = Math.min(Math.max(0, 1 - deathTime * 1.5), 1 - Game.player.status.condition / 100);
                 ctx.fillStyle = "white";
-                ctx.fillRect(-32, -32, Config.width + 64, Config.height + 64);
+                ctx.fillRect(-32, -32, canvasWidth + 64, canvasHeight + 64);
                 ctx.globalAlpha = 1;
             }
         }
